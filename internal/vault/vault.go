@@ -13,12 +13,25 @@ type Vault struct {
 	MasterPasswordFile string
 }
 
+func (v *Vault) InitVault() error {
+	enmasecDir, err := utils.GetEnmasecDirLocation()
+	if err != nil {
+		return utils.ErrGetEnmasecDir(err)
+	}
+	vaultPath := filepath.Join(enmasecDir, v.Name)
+	err = os.Mkdir(vaultPath, 0o755)
+	if err != nil {
+		return utils.ErrCreateDir(err, vaultPath)
+	}
+	return nil
+}
+
 func (v *Vault) AddService(service service.Service) error {
 	enmasecDir, err := utils.GetEnmasecDirLocation()
 	if err != nil {
 		return utils.ErrGetEnmasecDir(err)
 	}
-	serviceDir := filepath.Join(enmasecDir, service.Name)
+	serviceDir := filepath.Join(enmasecDir, v.Name, service.Name)
 	err = os.Mkdir(serviceDir, 0o755)
 	if err != nil {
 		return utils.ErrCreateDir(err, serviceDir)

@@ -67,6 +67,7 @@ func ErrGetEnmasecDir(err error) error {
 	}
 	remedyArr := []string{
 		"Check user account permissions and profile configuration.",
+		"Initialise vault before adding service.",
 		"Create /home/user/.enmasec directory manually.",
 	}
 	return NewError(err, descriptionArr, remedyArr)
