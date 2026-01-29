@@ -38,6 +38,18 @@ func ErrCreateFile(err error, filepath string) error {
 	return NewError(err, descriptionArr, remedyArr)
 }
 
+func ErrOpenFile(err error, filepath string) error {
+	descriptionArr := []string{
+		fmt.Sprintf("Couldn't open file %s", filepath),
+		"Failed to open file",
+	}
+	remedyArr := []string{
+		"Check if you have enough permissions to open this file.",
+		"Verify the filepath is valid and doesn't contain illegal characters.",
+	}
+	return NewError(err, descriptionArr, remedyArr)
+}
+
 func ErrEncryptFile(err error) error {
 	descriptionArr := []string{
 		"Couldn't encrypt file.",

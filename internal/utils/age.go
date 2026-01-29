@@ -30,8 +30,13 @@ func EncryptIntoFile(data []byte, masterKey string, filepath string) error {
 	return nil
 }
 
-func DecryptFromFile(masterKey string, filepath string) error {
+func DecryptFromFile(masterKey string, filepath string) ([]byte, error) {
 	identity, err := age.NewScryptIdentity(masterKey)
+	if err != nil {
+		return nil, ErrCreateAgeIdentity(err)
+	}
+
+	f, err := os.Open(filepath)
 	if err != nil {
 	}
 }
