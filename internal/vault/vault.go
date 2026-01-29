@@ -9,8 +9,8 @@ import (
 )
 
 type Vault struct {
-	Name               string
-	MasterPasswordFile string
+	Name     string
+	Unlocked bool
 }
 
 func (v *Vault) InitVault() error {
@@ -37,4 +37,12 @@ func (v *Vault) AddService(service service.Service) error {
 		return utils.ErrCreateDir(err, serviceDir)
 	}
 	return nil
+}
+
+func (v *Vault) Unlock(masterPassword string) error {
+	enmasecDir, err := utils.GetEnmasecDirLocation()
+	if err != nil {
+		return utils.ErrGetEnmasecDir(err)
+	}
+	keyFile := filepath.Join(enmasecDir, v.Name, "key.age")
 }

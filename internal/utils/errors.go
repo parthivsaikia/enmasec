@@ -15,6 +15,17 @@ func ErrCreateAgeRecipient(err error) error {
 	return NewError(err, descriptionArr, remedyArr)
 }
 
+func ErrCreateAgeIdentity(err error) error {
+	descriptionArr := []string{
+		"Couldn't create age recipient",
+		"Invalid master key",
+	}
+	remedyArr := []string{
+		"Make sure the master key is correct",
+	}
+	return NewError(err, descriptionArr, remedyArr)
+}
+
 func ErrCreateFile(err error, filepath string) error {
 	descriptionArr := []string{
 		fmt.Sprintf("Couldn't create file: %s", filepath),
