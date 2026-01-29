@@ -50,6 +50,17 @@ func ErrOpenFile(err error, filepath string) error {
 	return NewError(err, descriptionArr, remedyArr)
 }
 
+func ErrWriteFile(err error, filepath string) error {
+	descriptionArr := []string{
+		fmt.Sprintf("Error in writing to file %s", filepath),
+	}
+	remedyArr := []string{
+		"Make sure you have write permissions.",
+		"Make sure the file name is correct.",
+	}
+	return NewError(err, descriptionArr, remedyArr)
+}
+
 func ErrEncryptFile(err error, filepath string) error {
 	descriptionArr := []string{
 		fmt.Sprintf("Couldn't encrypt file %s.", filepath),
@@ -129,6 +140,18 @@ func ErrCreateDir(err error, path string) error {
 	remedyArr := []string{
 		"Make sure you have sufficient permissions.",
 		"Verify the directory path is valid",
+	}
+	return NewError(err, descriptionArr, remedyArr)
+}
+
+func ErrUnlockVault(vaultName string) error {
+	err := (fmt.Errorf("failed to unlock vault %s", vaultName))
+	descriptionArr := []string{
+		"Failed to open vault",
+		"Decrypted text doesn't match with key.",
+	}
+	remedyArr := []string{
+		"Make sure that you have enough permissions to read the key file",
 	}
 	return NewError(err, descriptionArr, remedyArr)
 }

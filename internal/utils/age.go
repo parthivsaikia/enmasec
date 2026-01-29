@@ -42,6 +42,8 @@ func DecryptFromFile(masterKey string, filepath string) ([]byte, error) {
 	if err != nil {
 		return nil, ErrOpenFile(err, filepath)
 	}
+
+	defer f.Close()
 	r, err := age.Decrypt(f, identity)
 	if err != nil {
 		return nil, ErrDecryptFile(err, filepath)
