@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"bytes"
+	"io"
 	"os"
 
 	"filippo.io/age"
@@ -21,7 +23,7 @@ func EncryptIntoFile(data []byte, masterKey string, filepath string) error {
 
 	writer, err := age.Encrypt(f, recipient)
 	if err != nil {
-		return ErrEncryptFile(err)
+		return ErrEncryptFile(err, filepath)
 	}
 
 	writer.Write(data)
@@ -38,5 +40,17 @@ func DecryptFromFile(masterKey string, filepath string) ([]byte, error) {
 
 	f, err := os.Open(filepath)
 	if err != nil {
+		return nil, ErrOpenFile(err, filepath)
 	}
+	r, err := age.Decrypt(f, identity)
+	if err != nil {
+		return nil, ErrDecryptFile(err, filepath)
+	}
+
+	out := &bytes.Buffer{}
+	if _, err := io.Copy(out, r); err != nil {
+		return nil, ErrReadEncryptionFileData(err, filepath)
+	}
+
+	return out.Bytes(), nil
 }

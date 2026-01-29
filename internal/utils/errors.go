@@ -50,14 +50,39 @@ func ErrOpenFile(err error, filepath string) error {
 	return NewError(err, descriptionArr, remedyArr)
 }
 
-func ErrEncryptFile(err error) error {
+func ErrEncryptFile(err error, filepath string) error {
 	descriptionArr := []string{
-		"Couldn't encrypt file.",
+		fmt.Sprintf("Couldn't encrypt file %s.", filepath),
 		"Encryption process failed.",
 	}
 	remedyArr := []string{
 		"Verify the recipient/public key is valid.",
 		"Ensure the file is accessible and not corrupted.",
+	}
+	return NewError(err, descriptionArr, remedyArr)
+}
+
+func ErrDecryptFile(err error, filepath string) error {
+	descriptionArr := []string{
+		fmt.Sprintf("Couldn't decrypt file %s.", filepath),
+		"Decryption process failed.",
+	}
+	remedyArr := []string{
+		"Verify the recipient/public key is valid.",
+		"Ensure the file is accessible and not corrupted.",
+	}
+	return NewError(err, descriptionArr, remedyArr)
+}
+
+func ErrReadEncryptionFileData(err error, filepath string) error {
+	descriptionArr := []string{
+		fmt.Sprintf("File %s is decrypted but can't read its content", filepath),
+		"Error in reading encrypted data",
+	}
+	remedyArr := []string{
+		"Check if the file has proper read permissions.",
+		"Verify the file isn't corrupted or locked by another process.",
+		"Ensure sufficient memory is available to read the file.",
 	}
 	return NewError(err, descriptionArr, remedyArr)
 }
