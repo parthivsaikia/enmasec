@@ -41,15 +41,20 @@ func (v *Vault) InitVault() error {
 	return nil
 }
 
-func (v *Vault) AddService(service service.Service) error {
+func (v *Vault) AddService(serviceName string) error {
 	enmasecDir, err := utils.GetEnmasecDirLocation()
 	if err != nil {
 		return utils.ErrGetEnmasecDir(err)
 	}
-	serviceDir := filepath.Join(enmasecDir, v.Name, service.Name)
-	err = os.Mkdir(serviceDir, 0o755)
-	if err != nil {
-		return utils.ErrCreateDir(err, serviceDir)
+
+	serviceDir := filepath.Join(enmasecDir, v.Name, serviceName)
+
+	service := service.Service{
+		Name:            serviceName,
+		ServiceLocation: serviceDir,
+	}
+	if err = service.CreateService(); err != nil {
+		return err
 	}
 	return nil
 }
