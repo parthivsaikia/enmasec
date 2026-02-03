@@ -75,3 +75,10 @@ func (v *Vault) Unlock(masterPassword string) error {
 	}
 	return utils.ErrUnlockVault(v.Name)
 }
+
+func (v *Vault) UpdateService(oldServiceName, newServiceName string) error {
+	if err := os.Rename(oldServiceName, newServiceName); err != nil {
+		return utils.ErrRenameDir(err, oldServiceName, newServiceName)
+	}
+	return nil
+}

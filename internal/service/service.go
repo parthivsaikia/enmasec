@@ -2,6 +2,7 @@ package service
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/parthivsaikia/enmasec/internal/account"
 	"github.com/parthivsaikia/enmasec/internal/utils"
@@ -21,8 +22,17 @@ func (s *Service) CreateService() error {
 }
 
 func (s *Service) AddAccount(userName string, password string, metadata map[string]any, masterKey string) error {
-	account := account.Account{
+	data := account.AccountData{
+		Username: userName,
+		Password: password,
 		MetaData: metadata,
+	}
+
+	accountLocation := filepath.Join(s.ServiceLocation, userName+".age")
+
+	account := account.Account{
+		Data:            data,
+		AccountLocation: accountLocation,
 	}
 	if err := account.EncryptAccountData(masterKey); err != nil {
 		return err

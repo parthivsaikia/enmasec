@@ -6,13 +6,19 @@ import (
 	"github.com/parthivsaikia/enmasec/internal/utils"
 )
 
+type AccountData struct {
+	Username string
+	Password string
+	MetaData map[string]any
+}
+
 type Account struct {
-	MetaData        map[string]any
+	Data            AccountData
 	AccountLocation string
 }
 
 func (a *Account) EncryptAccountData(masterKey string) error {
-	jsonData, err := json.Marshal(a.MetaData)
+	jsonData, err := json.Marshal(a.Data)
 	if err != nil {
 		return utils.ErrJSONMarshal(err)
 	}
