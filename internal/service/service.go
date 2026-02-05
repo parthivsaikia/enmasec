@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -38,4 +39,21 @@ func (s *Service) AddAccount(userName string, password string, metadata map[stri
 		return err
 	}
 	return nil
+}
+
+func (s *Service) GetAccounts() ([]os.DirEntry, error) {
+	entities, err := os.ReadDir(s.ServiceLocation)
+	if err != nil {
+		// TODO: replace fmt.Errorf with enmasec errors
+		return nil, fmt.Errorf("error in reading directory %v", err)
+	}
+	accounts := []os.DirEntry{}
+	for _, entity := range entities {
+		if entity.IsDir() {
+			continue
+		} else {
+			accounts = append(accounts, entity)
+		}
+	}
+	return accounts, nil
 }
