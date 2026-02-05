@@ -57,3 +57,11 @@ func (s *Service) GetAccounts() ([]os.DirEntry, error) {
 	}
 	return accounts, nil
 }
+
+func (s *Service) UpdateAccountName(oldAccount account.Account, newName string) error {
+	newAccountLocation := filepath.Join(s.ServiceLocation, newName)
+	if err := os.Rename(oldAccount.AccountLocation, newAccountLocation); err != nil {
+		return fmt.Errorf("Couldn't rename file %s %v", oldAccount.AccountLocation, err)
+	}
+	return nil
+}
