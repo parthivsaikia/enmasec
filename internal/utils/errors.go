@@ -155,3 +155,15 @@ func ErrUnlockVault(vaultName string) error {
 	}
 	return NewError(err, descriptionArr, remedyArr)
 }
+
+func ErrRenameDir(err error, oldPath, newPath string) error {
+	descriptionArr := []string{
+		fmt.Sprintf("Cannot rename %s to %s", oldPath, newPath),
+		"Cannot perform renaming operation",
+	}
+	remedyArr := []string{
+		"Make sure you have enough permissions to write",
+		fmt.Sprintf("Make sure the filepath %s exists", oldPath),
+	}
+	return NewError(err, descriptionArr, remedyArr)
+}
