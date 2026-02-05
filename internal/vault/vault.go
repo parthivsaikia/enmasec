@@ -1,6 +1,7 @@
 package vault
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -13,22 +14,18 @@ const (
 )
 
 type Vault struct {
-	Name     string
-	Unlocked bool
+	Name          string
+	VaultLocation string
+	Unlocked      bool
 }
 
 func (v *Vault) InitVault() error {
-	enmasecDir, err := utils.GetEnmasecDirLocation()
+	err := os.Mkdir(v.VaultLocation, 0o755)
 	if err != nil {
-		return utils.ErrGetEnmasecDir(err)
-	}
-	vaultPath := filepath.Join(enmasecDir, v.Name)
-	err = os.Mkdir(vaultPath, 0o755)
-	if err != nil {
-		return utils.ErrCreateDir(err, vaultPath)
+		return utils.ErrCreateDir(err, v.VaultLocation)
 	}
 
-	keyFile := filepath.Join(enmasecDir, v.Name, "key.age")
+	keyFile := filepath.Join(v.VaultLocation, "key.age")
 	f, err := os.Create(keyFile)
 	if err != nil {
 		return utils.ErrCreateFile(err, keyFile)
@@ -42,29 +39,20 @@ func (v *Vault) InitVault() error {
 }
 
 func (v *Vault) AddService(serviceName string) error {
-	enmasecDir, err := utils.GetEnmasecDirLocation()
-	if err != nil {
-		return utils.ErrGetEnmasecDir(err)
-	}
-
-	serviceDir := filepath.Join(enmasecDir, v.Name, serviceName)
+	serviceDir := filepath.Join(v.VaultLocation, serviceName)
 
 	service := service.Service{
 		Name:            serviceName,
 		ServiceLocation: serviceDir,
 	}
-	if err = service.CreateService(); err != nil {
+	if err := service.CreateService(); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (v *Vault) Unlock(masterPassword string) error {
-	enmasecDir, err := utils.GetEnmasecDirLocation()
-	if err != nil {
-		return utils.ErrGetEnmasecDir(err)
-	}
-	keyFile := filepath.Join(enmasecDir, v.Name, "key.age")
+	keyFile := filepath.Join(v.VaultLocation, "key.age")
 	key, err := utils.DecryptFromFile(masterPassword, keyFile)
 	if err != nil {
 		return err
@@ -76,9 +64,26 @@ func (v *Vault) Unlock(masterPassword string) error {
 	return utils.ErrUnlockVault(v.Name)
 }
 
-func (v *Vault) UpdateService(oldServiceName, newServiceName string) error {
-	if err := os.Rename(oldServiceName, newServiceName); err != nil {
-		return utils.ErrRenameDir(err, oldServiceName, newServiceName)
+func (v *Vault) UpdateService(oldService service.Service, newServiceName string) error {
+	// oldServicePath = ~/enmasec/vaultName/service
+	newServiceName = filepath.Join(v.VaultLocation, newServiceName)
+	if err := os.Rename(oldService.Name, newServiceName); err != nil {
+		return utils.ErrRenameDir(err, oldService.Name, newServiceName)
 	}
 	return nil
+}
+
+func (v *Vault) GetServices() ([]os.DirEntry, error) {
+	entities, err := os.ReadDir(v.VaultLocation)
+	serviceDirs := []os.DirEntry{}
+	if err != nil {
+		return nil, fmt.Errorf("error reading dir %s", v.VaultLocation)
+	}
+	for _, entity := range entities {
+		if !entity.IsDir() {
+			continue
+		}
+		serviceDirs = append(serviceDirs, entity)
+	}
+	return serviceDirs, nil
 }
