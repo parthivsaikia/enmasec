@@ -77,6 +77,7 @@ func (v *Vault) GetServices() ([]os.DirEntry, error) {
 	entities, err := os.ReadDir(v.VaultLocation)
 	serviceDirs := []os.DirEntry{}
 	if err != nil {
+		// TODO: replace fmt.Errorf with enmasec Errors
 		return nil, fmt.Errorf("error reading dir %s", v.VaultLocation)
 	}
 	for _, entity := range entities {
