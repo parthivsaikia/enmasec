@@ -14,11 +14,12 @@ func GetEnmasecDirLocation() (string, error) {
 	if err != nil {
 		return "", ErrGetHomeDir(err)
 	}
-	vaultLocation := filepath.Join(homeDir, "enmasec")
+	vaultLocation := filepath.Join(homeDir, ".enmasec")
 	return vaultLocation, nil
 }
 
 func PasswordPrompt(prompt string) (string, error) {
+	fmt.Printf("%s", prompt)
 	bytes, err := term.ReadPassword(syscall.Stdin)
 	if err != nil {
 		return "", err

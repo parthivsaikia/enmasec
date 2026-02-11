@@ -19,8 +19,13 @@ type Vault struct {
 	Unlocked      bool
 }
 
-func (v *Vault) InitVault() error {
-	err := os.Mkdir(v.VaultLocation, 0o755)
+func (v *Vault) InitVault(masterPassword string) error {
+	enmasecDir, err := utils.GetEnmasecDirLocation()
+	if err != nil {
+		return err
+	}
+	err = os.Mkdir(enmasecDir, 0o755)
+	err = os.Mkdir(v.VaultLocation, 0o755)
 	if err != nil {
 		return utils.ErrCreateDir(err, v.VaultLocation)
 	}
@@ -31,10 +36,11 @@ func (v *Vault) InitVault() error {
 		return utils.ErrCreateFile(err, keyFile)
 	}
 	defer f.Close()
-	_, err = f.Write([]byte(KEY_FILE_TEXT))
-	if err != nil {
-		return utils.ErrWriteFile(err, keyFile)
+
+	if err := utils.EncryptIntoFile([]byte(KEY_FILE_TEXT), masterPassword, f.Name()); err != nil {
+		return utils.ErrEncryptFile(err, f.Name())
 	}
+
 	return nil
 }
 
@@ -87,4 +93,28 @@ func (v *Vault) GetServices() ([]os.DirEntry, error) {
 		serviceDirs = append(serviceDirs, entity)
 	}
 	return serviceDirs, nil
+}
+
+func (v *Vault) UpdateVault(newName string, newPassword string) error {
+	if newPassword == "" || newName == "" {
+		return fmt.Errorf("Vault name and password can't be empty")
+	}
+	enmasecDir, err := utils.GetEnmasecDirLocation()
+	if err != nil {
+		return utils.ErrGetEnmasecDir(err)
+	}
+	if newName != "" {
+		newVaultLocation := filepath.Join(enmasecDir, newName)
+		if err := os.Rename(v.VaultLocation, newVaultLocation); err != nil {
+			return utils.ErrRenameDir(err, v.VaultLocation, newVaultLocation)
+		}
+		v.VaultLocation = newVaultLocation
+	}
+	if newPassword != "" {
+		keyFile := filepath.Join(v.VaultLocation, "key.age")
+		if err = utils.EncryptIntoFile([]byte(KEY_FILE_TEXT), newPassword, keyFile); err != nil {
+			return fmt.Errorf("unable to set password")
+		}
+	}
+	return nil
 }
