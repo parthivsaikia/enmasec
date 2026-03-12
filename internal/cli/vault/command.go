@@ -40,7 +40,6 @@ func NewCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newInitCommand())
 	cmd.AddCommand(newCheckoutCommand())
-	cmd.PersistentFlags().String("dir", "", "add custom location for vault")
 	cmd.AddCommand(newListCommand())
 	cmd.AddCommand(newUpdateCommand())
 	return cmd
@@ -123,6 +122,7 @@ func newInitCommand() *cobra.Command {
 			return nil
 		},
 	}
+	cmd.Flags().String("dir", "", "add custom location for vault")
 	return cmd
 }
 
@@ -209,6 +209,7 @@ func newUpdateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update [vault name]",
 		Short: "Update name, password or location of a vault",
+		Args:  cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			vaultName := args[0]
 			vaultLocation := config.Config.Vaults[vaultName]
@@ -221,8 +222,11 @@ func newUpdateCommand() *cobra.Command {
 				return err
 			}
 
-			if !utils.CheckFileExists(newDir) {
-				return fmt.Errorf("directory %s doesn't exist", newDir)
+			if newDir != "" {
+				if !utils.CheckFileExists(newDir) {
+					fmt.Println(newDir)
+					return fmt.Errorf("directory %s doesn't exist", newDir)
+				}
 			}
 
 			newName, err := cmd.Flags().GetString("name")
@@ -259,6 +263,11 @@ func newUpdateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
+
+			if newDir == "" {
+				newDir = filepath.Dir(vaultLocation)
+			}
+
 			newName, err := cmd.Flags().GetString("name")
 			if err != nil {
 				return err
@@ -282,6 +291,9 @@ func newUpdateCommand() *cobra.Command {
 			}
 
 			if newPassword != "" {
+				if !utils.CheckPasswordValid(newPassword) {
+					return fmt.Errorf("password is not strong enough")
+				}
 				f := filepath.Join(newVaultLocation, "key.age")
 				data, err := encryption.Encrypt([]byte(store.KEY_FILE_TEXT), newPassword)
 				if err != nil {
@@ -293,7 +305,7 @@ func newUpdateCommand() *cobra.Command {
 				}
 			}
 
-			config.Config.Vaults[vaultName] = newVaultLocation
+			config.Config.Vaults[newName] = newVaultLocation
 			if err := config.Save(); err != nil {
 				return err
 			}
@@ -301,7 +313,7 @@ func newUpdateCommand() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().String("dir", "", "change location of vault to given directory.")
+	cmd.Flags().String("dir", "", "add custom location for vault")
 	cmd.Flags().String("password", "", "change password of the vault.")
 	cmd.Flags().String("name", "", "change name of the vault.")
 	return cmd
