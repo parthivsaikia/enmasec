@@ -6,26 +6,25 @@ import (
 	"path/filepath"
 
 	"github.com/parthivsaikia/enmasec/internal/encryption"
-	"github.com/parthivsaikia/enmasec/internal/model"
 )
 
-func (s *Store) CreateVault(vault model.Vault, masterPassword string) error {
-	if _, err := os.Stat(s.VaultPath); !os.IsNotExist(err) {
-		return fmt.Errorf("vault %s already exixts", vault.Name)
+func CreateVault(vaultLocation, masterPassword string) error {
+	if err := os.MkdirAll(vaultLocation, 0o700); err != nil {
+		return fmt.Errorf("unable to create vault %w", err)
 	}
-	if err := os.Mkdir(s.VaultPath, 0o755); err != nil {
-		return fmt.Errorf("unable to create vault %v", err)
-	}
-	keyFile := filepath.Join(s.VaultPath, vault.Name)
+	keyFile := filepath.Join(vaultLocation, "key.age")
 	file, err := os.Create(keyFile)
 	if err != nil {
-		return fmt.Errorf("unable to create key file %v", err)
+		return fmt.Errorf("unable to create key file %w", err)
 	}
 	defer file.Close()
 	data, err := encryption.Encrypt([]byte(KEY_FILE_TEXT), masterPassword)
 	if err != nil {
-		return fmt.Errorf("unable to encrypt key file: %v", err)
+		return fmt.Errorf("unable to encrypt key file: %w", err)
 	}
-	file.Write(data)
+
+	if _, err := file.Write(data); err != nil {
+		return fmt.Errorf("unable to write to file %s", file.Name())
+	}
 	return nil
 }
