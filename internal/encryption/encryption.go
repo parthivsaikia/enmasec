@@ -12,10 +12,9 @@ import (
 	"golang.org/x/crypto/argon2"
 )
 
-func ArgonHash(password []byte) ([]byte, []byte) {
-	hash := rand.Text()
+func ArgonHash(password []byte, hash []byte) []byte {
 	key := argon2.IDKey(password, []byte(hash), 1, 64*1024, 4, 32)
-	return key, []byte(hash)
+	return key
 }
 
 func EncryptAge(data []byte, masterKey string) ([]byte, error) {

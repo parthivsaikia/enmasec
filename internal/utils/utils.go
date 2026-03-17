@@ -31,7 +31,7 @@ func PasswordPrompt(prompt string) (string, error) {
 		return "", err
 	}
 	fmt.Println()
-	return string(bytes), nil
+	return strings.TrimSpace(string(bytes)), nil
 }
 
 func CheckFileExists(path string) bool {

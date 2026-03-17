@@ -1,7 +1,7 @@
 package store
 
 import (
-	"bufio"
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -33,6 +33,8 @@ func CreateVault(vaultLocation, password string, hash []byte) error {
 	if _, err := file.Write(data); err != nil {
 		return fmt.Errorf("unable to write to file %s", file.Name())
 	}
+	fmt.Println("password: ", password)
+	fmt.Println("hash: ", string(hash))
 	return nil
 }
 
@@ -45,24 +47,28 @@ func Unlock(vaultPath, password string) error {
 		return fmt.Errorf("key file doesn't exist")
 	}
 
-	f, err := os.Open(keyfile)
-	if err != nil {
-		return err
+	// Read the entire file
+	content, _ := os.ReadFile(keyfile)
+
+	// Search for the base string, ignoring the version number
+	splitIndex := bytes.Index(content, []byte("age-encryption.org/"))
+
+	if splitIndex != -1 {
+		hash = content[:splitIndex]
+		keybyte = content[splitIndex:]
 	}
 
-	defer f.Close()
+	hash = bytes.TrimSpace(hash)
 
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		for scanner.Text() != "age-encryption.org/v1" {
-			hash = append(hash, []byte(scanner.Text())...)
-		}
-		keybyte = append(keybyte, scanner.Bytes()...)
-	}
+	idKey := encryption.ArgonHash([]byte(password), hash)
+	fmt.Println(password)
+	fmt.Println(string(idKey))
 
-	key, err := encryption.DecryptAge(password, keybyte)
+	key, err := encryption.DecryptAge(string(idKey), keybyte)
 	if err != nil {
-		return fmt.Errorf("unable to decrypt key file")
+		fmt.Println("hash: ", string(hash))
+		fmt.Println("keybyte: ", string(keybyte))
+		return fmt.Errorf("unable to decrypt key file: %w", err)
 	}
 	if string(key) != (KEY_FILE_TEXT) {
 		return fmt.Errorf("key text doesn't match")
