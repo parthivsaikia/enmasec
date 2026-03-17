@@ -297,7 +297,7 @@ func newUpdateCommand() *cobra.Command {
 					return fmt.Errorf("password is not strong enough")
 				}
 				f := filepath.Join(newVaultLocation, "key.age")
-				data, err := encryption.Encrypt([]byte(store.KEY_FILE_TEXT), newPassword)
+				data, err := encryption.EncryptAge([]byte(store.KEY_FILE_TEXT), newPassword)
 				if err != nil {
 					return err
 				}
@@ -315,7 +315,6 @@ func newUpdateCommand() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().String("dir", "", "add custom location for vault")
 	cmd.Flags().String("password", "", "change password of the vault.")
 	cmd.Flags().String("name", "", "change name of the vault.")
 	return cmd

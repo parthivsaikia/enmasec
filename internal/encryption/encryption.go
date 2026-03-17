@@ -2,12 +2,23 @@ package encryption
 
 import (
 	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"fmt"
 	"io"
 
 	"filippo.io/age"
+	"golang.org/x/crypto/argon2"
 )
 
-func Encrypt(data []byte, masterKey string) ([]byte, error) {
+func ArgonHash(password []byte) ([]byte, []byte) {
+	hash := rand.Text()
+	key := argon2.IDKey(password, []byte(hash), 1, 64*1024, 4, 32)
+	return key, []byte(hash)
+}
+
+func EncryptAge(data []byte, masterKey string) ([]byte, error) {
 	recipient, err := age.NewScryptRecipient(masterKey)
 	if err != nil {
 		return nil, ErrCreateAgeRecipient(err)
@@ -30,7 +41,7 @@ func Encrypt(data []byte, masterKey string) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
-func Decrypt(masterKey string, encryptedData []byte) ([]byte, error) {
+func DecryptAge(masterKey string, encryptedData []byte) ([]byte, error) {
 	identity, err := age.NewScryptIdentity(masterKey)
 	if err != nil {
 		return nil, err
