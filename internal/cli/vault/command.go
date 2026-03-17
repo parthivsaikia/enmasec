@@ -42,6 +42,7 @@ func NewCommand() *cobra.Command {
 	cmd.AddCommand(newCheckoutCommand())
 	cmd.AddCommand(newListCommand())
 	cmd.AddCommand(newUpdateCommand())
+	cmd.PersistentFlags().String("dir", "", "add custom location for vault")
 	return cmd
 }
 
@@ -69,11 +70,11 @@ func newInitCommand() *cobra.Command {
 				return err
 			}
 
-			vaultLocation := filepath.Join(utils.GetEnmasecDirLocation(), vaultName)
-
-			if dir != "" {
-				vaultLocation = filepath.Join(dir, vaultName)
+			if dir == "" {
+				dir = utils.GetEnmasecDirLocation()
 			}
+
+			vaultLocation := filepath.Join(dir, vaultName)
 
 			if utils.CheckFileExists(vaultLocation) {
 				return fmt.Errorf("vault %s already exists at %s", vaultName, vaultLocation)
@@ -95,18 +96,20 @@ func newInitCommand() *cobra.Command {
 			if password != confirmPassword {
 				return fmt.Errorf("passwords don't match")
 			}
+			hashedPassword, hash := encryption.ArgonHash([]byte(password))
 			vaultName := args[0]
 			dir, err := cmd.Flags().GetString("dir")
 			if err != nil {
 				return err
 			}
-			vaultLocation := filepath.Join(utils.GetEnmasecDirLocation(), vaultName)
 
-			if dir != "" {
-				vaultLocation = filepath.Join(dir, vaultName)
+			if dir == "" {
+				dir = utils.GetEnmasecDirLocation()
 			}
 
-			err = store.CreateVault(vaultLocation, password)
+			vaultLocation := filepath.Join(dir, vaultName)
+
+			err = store.CreateVault(vaultLocation, string(hashedPassword))
 			if err != nil {
 				return err
 			}
@@ -122,7 +125,6 @@ func newInitCommand() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().String("dir", "", "add custom location for vault")
 	return cmd
 }
 
