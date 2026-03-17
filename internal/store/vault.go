@@ -35,3 +35,37 @@ func CreateVault(vaultLocation, password string, hash []byte) error {
 	}
 	return nil
 }
+
+func Unlock(vaultPath, password string) error {
+	var hash []byte
+	var keybyte []byte
+	keyfile := filepath.Join(vaultPath, "key.age")
+	if !utils.CheckFileExists(keyfile) {
+		fmt.Println(keyfile)
+		return fmt.Errorf("key file doesn't exist")
+	}
+
+	f, err := os.Open(keyfile)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		for scanner.Text() != "age-encryption.org/v1" {
+			hash = append(hash, []byte(scanner.Text())...)
+		}
+		keybyte = append(keybyte, scanner.Bytes()...)
+	}
+
+	key, err := encryption.DecryptAge(password, keybyte)
+	if err != nil {
+		return fmt.Errorf("unable to decrypt key file")
+	}
+	if string(key) != (KEY_FILE_TEXT) {
+		return fmt.Errorf("key text doesn't match")
+	}
+	return nil
+}
