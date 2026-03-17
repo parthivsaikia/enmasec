@@ -36,7 +36,15 @@ func newAddCmd() *cobra.Command {
 				return fmt.Errorf("service name shouldn't contain '/'")
 			}
 
-			servicePath := filepath.Join(config.Config.Vaults[config.Config.CurrentVault], args[0])
+			vault, err := cmd.Flags().GetString("vault")
+			if err != nil {
+				return err
+			}
+			if vault == "" {
+				vault = config.Config.CurrentVault
+			}
+
+			servicePath := filepath.Join(config.Config.Vaults[vault], args[0])
 			if utils.CheckFileExists(servicePath) {
 				return fmt.Errorf("service %s already exists", args[0])
 			}
@@ -44,12 +52,19 @@ func newAddCmd() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			password, err := utils.PasswordPrompt(fmt.Sprintf("enter master password for vault %s", config.Config.CurrentVault))
+			vault, err := cmd.Flags().GetString("vault")
+			if err != nil {
+				return err
+			}
+			if vault == "" {
+				vault = config.Config.CurrentVault
+			}
+
+			vaultLocation := config.Config.Vaults[vault]
+			password, err := utils.PasswordPrompt(fmt.Sprintf("enter master password for vault %s", vault))
 			if err != nil {
 				return fmt.Errorf("unable to capture password %w", err)
 			}
-
-			vaultLocation := config.Config.Vaults[config.Config.CurrentVault]
 
 			if err := store.Unlock(vaultLocation, password); err != nil {
 				return fmt.Errorf("unable to unlock vault: %w", err)
@@ -65,5 +80,6 @@ func newAddCmd() *cobra.Command {
 			return nil
 		},
 	}
+	addCmd.Flags().String("vault", "", "vault where service needs to be added.")
 	return addCmd
 }
