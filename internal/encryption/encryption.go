@@ -2,10 +2,7 @@ package encryption
 
 import (
 	"bytes"
-	"crypto/aes"
-	"crypto/cipher"
 	"crypto/rand"
-	"fmt"
 	"io"
 
 	"filippo.io/age"
@@ -15,6 +12,12 @@ import (
 func ArgonHash(password []byte, hash []byte) []byte {
 	key := argon2.IDKey(password, []byte(hash), 1, 64*1024, 4, 32)
 	return key
+}
+
+func RandomByte(l int) []byte {
+	b := make([]byte, l)
+	rand.Read(b)
+	return b
 }
 
 func EncryptAge(data []byte, masterKey string) ([]byte, error) {
@@ -58,44 +61,4 @@ func DecryptAge(masterKey string, encryptedData []byte) ([]byte, error) {
 		return nil, err
 	}
 	return out.Bytes(), nil
-}
-
-func EncryptGCM(key, name string) ([]byte, error) {
-	block, err := aes.NewCipher([]byte(key))
-	if err != nil {
-		return nil, err
-	}
-
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-
-	nonce := make([]byte, gcm.NonceSize())
-
-	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		return nil, err
-	}
-
-	return gcm.Seal(nonce, nonce, []byte(name), nil), nil
-}
-
-func DecryptGCM(key, ciphertext string) ([]byte, error) {
-	block, err := aes.NewCipher([]byte(key))
-	if err != nil {
-		return nil, err
-	}
-
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-
-	nonceSize := gcm.NonceSize()
-	if len(ciphertext) < nonceSize {
-		return nil, fmt.Errorf("ciphertext too short")
-	}
-
-	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
-	return gcm.Open(nil, []byte(nonce), []byte(ciphertext), nil)
 }

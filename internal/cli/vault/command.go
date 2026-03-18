@@ -1,7 +1,6 @@
 package vault
 
 import (
-	"crypto/rand"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -98,9 +97,9 @@ func newInitCommand() *cobra.Command {
 				return fmt.Errorf("passwords don't match")
 			}
 
-			salt := rand.Text()
+			salt := encryption.RandomByte(16)
 
-			hashedPassword := encryption.ArgonHash([]byte(password), []byte(salt))
+			hashedPassword := encryption.ArgonHash([]byte(password), salt)
 			vaultName := args[0]
 			dir, err := cmd.Flags().GetString("dir")
 			if err != nil {
@@ -113,7 +112,7 @@ func newInitCommand() *cobra.Command {
 
 			vaultLocation := filepath.Join(dir, vaultName)
 
-			err = store.CreateVault(vaultLocation, string(hashedPassword), []byte(salt))
+			err = store.CreateVault(vaultLocation, string(hashedPassword), salt)
 			if err != nil {
 				return err
 			}
@@ -150,7 +149,7 @@ func newCheckoutCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			vaultName := args[0]
 			vaultPath := config.Config.Vaults[vaultName]
-			password, err := utils.PasswordPrompt(fmt.Sprintf("Enter password for vault %s", vaultName))
+			password, err := utils.PasswordPrompt(fmt.Sprintf("Enter password for vault %s: ", vaultName))
 			if err != nil {
 				return err
 			}

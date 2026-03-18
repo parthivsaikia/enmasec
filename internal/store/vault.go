@@ -33,8 +33,6 @@ func CreateVault(vaultLocation, password string, hash []byte) error {
 	if _, err := file.Write(data); err != nil {
 		return fmt.Errorf("unable to write to file %s", file.Name())
 	}
-	fmt.Println("password: ", password)
-	fmt.Println("hash: ", string(hash))
 	return nil
 }
 
@@ -61,8 +59,6 @@ func Unlock(vaultPath, password string) error {
 	hash = bytes.TrimSpace(hash)
 
 	idKey := encryption.ArgonHash([]byte(password), hash)
-	fmt.Println(password)
-	fmt.Println(string(idKey))
 
 	key, err := encryption.DecryptAge(string(idKey), keybyte)
 	if err != nil {
