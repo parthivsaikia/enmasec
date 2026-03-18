@@ -15,13 +15,21 @@ func CreateVault(vaultLocation, password string, hash []byte) error {
 		return fmt.Errorf("unable to create vault %w", err)
 	}
 	keyFile := filepath.Join(vaultLocation, "key.age")
-	file, err := os.Create(keyFile)
+	kf, err := os.Create(keyFile)
 	if err != nil {
 		return fmt.Errorf("unable to create key file %w", err)
 	}
-	defer file.Close()
+	defer kf.Close()
 
-	if _, err := file.Write(append(hash, []byte("\n")...)); err != nil {
+	indexFile := filepath.Join(vaultLocation, "index.age")
+	iFile, err := os.Create(indexFile)
+	if err != nil {
+		return fmt.Errorf("unable to create index file %w", err)
+	}
+
+	defer iFile.Close()
+
+	if _, err := kf.Write(append(hash, []byte("\n")...)); err != nil {
 		return err
 	}
 
@@ -30,8 +38,8 @@ func CreateVault(vaultLocation, password string, hash []byte) error {
 		return fmt.Errorf("unable to encrypt key file: %w", err)
 	}
 
-	if _, err := file.Write(data); err != nil {
-		return fmt.Errorf("unable to write to file %s", file.Name())
+	if _, err := kf.Write(data); err != nil {
+		return fmt.Errorf("unable to write to file %s", kf.Name())
 	}
 	return nil
 }
