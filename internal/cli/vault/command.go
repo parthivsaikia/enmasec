@@ -97,9 +97,6 @@ func newInitCommand() *cobra.Command {
 				return fmt.Errorf("passwords don't match")
 			}
 
-			salt := encryption.RandomByte(16)
-
-			hashedPassword := encryption.ArgonHash([]byte(password), salt)
 			vaultName := args[0]
 			dir, err := cmd.Flags().GetString("dir")
 			if err != nil {
@@ -112,7 +109,7 @@ func newInitCommand() *cobra.Command {
 
 			vaultLocation := filepath.Join(dir, vaultName)
 
-			err = store.CreateVault(vaultLocation, string(hashedPassword), salt)
+			err = store.CreateVault(vaultLocation, password)
 			if err != nil {
 				return err
 			}
