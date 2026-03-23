@@ -66,7 +66,7 @@ func newAddCmd() *cobra.Command {
 				return fmt.Errorf("unable to capture password %w", err)
 			}
 
-			if err := store.Unlock(vaultLocation, password); err != nil {
+			if _, err := store.Unlock(vaultLocation, password); err != nil {
 				return fmt.Errorf("unable to unlock vault: %w", err)
 			}
 

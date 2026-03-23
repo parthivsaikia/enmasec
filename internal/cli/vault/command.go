@@ -150,7 +150,7 @@ func newCheckoutCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if err := store.Unlock(vaultPath, password); err != nil {
+			if _, err := store.Unlock(vaultPath, password); err != nil {
 				return fmt.Errorf("unable to unlock vault: %w", err)
 			}
 
@@ -258,8 +258,9 @@ func newUpdateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if err := store.Unlock(config.Config.Vaults[vaultName], password); err != nil {
-				return fmt.Errorf("unable to unlock vault %s", vaultName)
+			key, err := store.Unlock(config.Config.Vaults[vaultName], password)
+			if err != nil {
+				return err
 			}
 			newDir, err := cmd.Flags().GetString("dir")
 			if err != nil {
@@ -297,7 +298,7 @@ func newUpdateCommand() *cobra.Command {
 					return fmt.Errorf("password is not strong enough")
 				}
 				f := filepath.Join(newVaultLocation, "key.age")
-				data, err := encryption.EncryptAge([]byte(store.KEY_FILE_TEXT), newPassword)
+				data, err := encryption.EncryptAge(key, newPassword)
 				if err != nil {
 					return err
 				}

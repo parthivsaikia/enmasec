@@ -25,35 +25,30 @@ func CreateVault(vaultLocation, password string) error {
 	if err != nil {
 		return fmt.Errorf("unable to create index file %w", err)
 	}
-
 	defer iFile.Close()
 
-	data, err := encryption.EncryptAge([]byte(KEY_FILE_TEXT), password)
+	secretKey := encryption.RandomByte(32)
+	data, err := encryption.EncryptAge(secretKey, password)
 	if err != nil {
 		return fmt.Errorf("unable to encrypt key file: %w", err)
 	}
-
 	if _, err := kf.Write(data); err != nil {
 		return fmt.Errorf("unable to write to file %s", kf.Name())
 	}
 	return nil
 }
 
-func Unlock(vaultPath, password string) error {
+func Unlock(vaultPath, password string) ([]byte, error) {
 	keyfile := filepath.Join(vaultPath, "key.age")
 	if !utils.CheckFileExists(keyfile) {
 		fmt.Println(keyfile)
-		return fmt.Errorf("key file doesn't exist")
+		return nil, fmt.Errorf("key file doesn't exist")
 	}
 	content, _ := os.ReadFile(keyfile)
 
 	key, err := encryption.DecryptAge(password, content)
 	if err != nil {
-		return fmt.Errorf("unable to decrypt file: %w", err)
+		return nil, fmt.Errorf("unable to decrypt file: %w", err)
 	}
-
-	if string(key) != (KEY_FILE_TEXT) {
-		return fmt.Errorf("key text doesn't match")
-	}
-	return nil
+	return key, nil
 }
