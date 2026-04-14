@@ -35,15 +35,10 @@ func newAddCmd() *cobra.Command {
 			if strings.Contains(args[0], "/") {
 				return fmt.Errorf("service name shouldn't contain '/'")
 			}
-
-			vault, err := cmd.Flags().GetString("vault")
+			vault, err := resolveVault(cmd)
 			if err != nil {
 				return err
 			}
-			if vault == "" {
-				vault = config.Config.CurrentVault
-			}
-
 			servicePath := filepath.Join(config.Config.Vaults[vault], args[0])
 			if utils.CheckFileExists(servicePath) {
 				return fmt.Errorf("service %s already exists", args[0])
@@ -52,12 +47,9 @@ func newAddCmd() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			vault, err := cmd.Flags().GetString("vault")
+			vault, err := resolveVault(cmd)
 			if err != nil {
 				return err
-			}
-			if vault == "" {
-				vault = config.Config.CurrentVault
 			}
 
 			vaultLocation := config.Config.Vaults[vault]
@@ -82,4 +74,15 @@ func newAddCmd() *cobra.Command {
 	}
 	addCmd.Flags().String("vault", "", "vault where service needs to be added.")
 	return addCmd
+}
+
+func resolveVault(cmd *cobra.Command) (string, error) {
+	vault, err := cmd.Flags().GetString("vault")
+	if err != nil {
+		return "", err
+	}
+	if vault == "" {
+		vault = config.Config.CurrentVault
+	}
+	return vault, err
 }
