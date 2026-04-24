@@ -5,12 +5,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/parthivsaikia/enmasec/internal/model"
+	"github.com/parthivsaikia/enmasec/internal/models"
 	"github.com/parthivsaikia/enmasec/internal/utils"
 	"gopkg.in/yaml.v3"
 )
 
-var Config model.Config
+var Config models.Config
 
 func checkConfigFile() string {
 	files := []string{"config.yaml", "config.yml"}
