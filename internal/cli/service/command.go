@@ -3,11 +3,11 @@ package service
 import (
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/parthivsaikia/enmasec/internal/config"
 	"github.com/parthivsaikia/enmasec/internal/store"
 	"github.com/parthivsaikia/enmasec/internal/utils"
+	"github.com/parthivsaikia/enmasec/internal/validation"
 	"github.com/spf13/cobra"
 )
 
@@ -32,8 +32,8 @@ func newAddCmd() *cobra.Command {
 		Short: "Add a new service",
 		Args:  cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if strings.Contains(args[0], "/") {
-				return fmt.Errorf("service name shouldn't contain '/'")
+			if err := validation.ValidateServiceName(args[0]); err != nil {
+				return fmt.Errorf("invalid service name: %w", err)
 			}
 			vault, err := resolveVault(cmd)
 			if err != nil {
