@@ -44,11 +44,30 @@ func Unlock(vaultPath, password string) ([]byte, error) {
 		fmt.Println(keyfile)
 		return nil, fmt.Errorf("key file doesn't exist")
 	}
-	content, _ := os.ReadFile(keyfile)
+	content, err := os.ReadFile(keyfile)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read file %s: %w", keyfile, err)
+	}
 
 	key, err := encryption.DecryptAge(password, content)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decrypt file: %w", err)
 	}
 	return key, nil
+}
+
+func DecryptIndexFile(vault string, password string) ([]byte, error) {
+	indexFile := filepath.Join(vault, "index.age")
+	if !utils.CheckFileExists(indexFile) {
+		return nil, fmt.Errorf("index file doesn't exist")
+	}
+	content, err := os.ReadFile(indexFile)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read file %s: %w", indexFile, err)
+	}
+	data, err := encryption.DecryptAge(password, content)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decrypt map content: %w", err)
+	}
+	return data, nil
 }
