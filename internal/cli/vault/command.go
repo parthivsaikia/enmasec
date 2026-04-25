@@ -53,21 +53,19 @@ func newInitCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			vaultName := args[0]
+			// validate the name of the vault
 			if err := validation.ValidateVaultName(vaultName); err != nil {
 				return fmt.Errorf("validation error: %w", err)
 			}
-
 			dir, err := cmd.Flags().GetString("dir")
 			if err != nil {
 				return err
 			}
-
 			if dir == "" {
 				dir = utils.GetEnmasecDirLocation()
 			}
-
+			// validate the location of the vault
 			vaultLocation := filepath.Join(dir, vaultName)
-
 			if utils.CheckFileExists(vaultLocation) {
 				return fmt.Errorf("vault %s already exists at %s", vaultName, vaultLocation)
 			}
