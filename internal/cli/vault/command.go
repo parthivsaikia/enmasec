@@ -76,7 +76,7 @@ func newInitCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if !utils.CheckPasswordValid(password) {
+			if !validation.CheckPasswordValid(password) {
 				return fmt.Errorf("password not strong enough")
 			}
 			confirmPassword, err := utils.PasswordPrompt("Enter master password again: ")
