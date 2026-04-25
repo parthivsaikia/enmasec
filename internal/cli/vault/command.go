@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/table"
@@ -12,6 +11,7 @@ import (
 	"github.com/parthivsaikia/enmasec/internal/encryption"
 	"github.com/parthivsaikia/enmasec/internal/store"
 	"github.com/parthivsaikia/enmasec/internal/utils"
+	"github.com/parthivsaikia/enmasec/internal/validation"
 	"github.com/spf13/cobra"
 )
 
@@ -53,16 +53,8 @@ func newInitCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			vaultName := args[0]
-			if vaultName == "" {
-				return fmt.Errorf("error: vault name not provided")
-			}
-
-			if location, ok := config.Config.Vaults[vaultName]; ok {
-				return fmt.Errorf("error: vault with name %s already exists in %s", vaultName, location)
-			}
-
-			if strings.ContainsAny(vaultName, "/\\") {
-				return fmt.Errorf("vaultname can't contain / or \\")
+			if err := validation.ValidateVaultName(vaultName); err != nil {
+				return fmt.Errorf("validation error: %w", err)
 			}
 
 			dir, err := cmd.Flags().GetString("dir")
