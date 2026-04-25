@@ -67,7 +67,7 @@ func newInitCommand() *cobra.Command {
 			// validate the location of the vault
 			vaultLocation := filepath.Join(dir, vaultName)
 			if utils.CheckFileExists(vaultLocation) {
-				return fmt.Errorf("vault %s already exists at %s", vaultName, vaultLocation)
+				return fmt.Errorf("validation error: vault %s already exists at %s", vaultName, vaultLocation)
 			}
 			return nil
 		},
@@ -77,7 +77,7 @@ func newInitCommand() *cobra.Command {
 				return err
 			}
 			if !validation.CheckPasswordValid(password) {
-				return fmt.Errorf("password not strong enough")
+				return fmt.Errorf("validation error: password not strong enough")
 			}
 			confirmPassword, err := utils.PasswordPrompt("Enter master password again: ")
 			if err != nil {
@@ -92,16 +92,14 @@ func newInitCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
 			if dir == "" {
 				dir = utils.GetEnmasecDirLocation()
 			}
 
 			vaultLocation := filepath.Join(dir, vaultName)
-
 			err = store.CreateVault(vaultLocation, password)
 			if err != nil {
-				return err
+				return fmt.Errorf("unable to create vault: %w", err)
 			}
 
 			config.Config.CurrentVault = vaultName
@@ -109,9 +107,7 @@ func newInitCommand() *cobra.Command {
 			if err := config.Save(); err != nil {
 				return fmt.Errorf("couldn't save config: %w", err)
 			}
-
 			fmt.Printf("Created vault at %s", vaultLocation)
-
 			return nil
 		},
 	}

@@ -24,6 +24,7 @@ func GetEnmasecConfigDir() string {
 }
 
 func PasswordPrompt(prompt string) (string, error) {
+	// TODO: add a dynamic checklist of each of the password requirements which gets ticked once each requirement is met
 	fmt.Printf("%s", prompt)
 	bytes, err := term.ReadPassword(syscall.Stdin)
 	if err != nil {
