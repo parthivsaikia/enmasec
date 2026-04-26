@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/parthivsaikia/enmasec/internal/config"
+	"github.com/parthivsaikia/enmasec/internal/core"
 	"github.com/parthivsaikia/enmasec/internal/store"
 	"github.com/parthivsaikia/enmasec/internal/utils"
 	"github.com/parthivsaikia/enmasec/internal/validation"
@@ -51,23 +52,17 @@ func newAddCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
 			vaultLocation := config.Config.Vaults[vault]
 			password, err := utils.PasswordPrompt(fmt.Sprintf("enter master password for vault %s", vault))
 			if err != nil {
 				return fmt.Errorf("unable to capture password %w", err)
 			}
-
 			if _, err := store.Unlock(vaultLocation, password); err != nil {
 				return fmt.Errorf("unable to unlock vault: %w", err)
 			}
-
-			serviceLocation := filepath.Join(vaultLocation, args[0])
-
-			if err := store.CreateService(serviceLocation); err != nil {
+			if err := core.ServiceCreationHelper(vaultLocation, args[0], password); err != nil {
 				return fmt.Errorf("unable to create service: %w", err)
 			}
-
 			fmt.Printf("created service %s successfully.", args[0])
 			return nil
 		},

@@ -8,6 +8,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/table"
 	"github.com/parthivsaikia/enmasec/internal/config"
+	"github.com/parthivsaikia/enmasec/internal/core"
 	"github.com/parthivsaikia/enmasec/internal/encryption"
 	"github.com/parthivsaikia/enmasec/internal/store"
 	"github.com/parthivsaikia/enmasec/internal/utils"
@@ -97,7 +98,7 @@ func newInitCommand() *cobra.Command {
 			}
 
 			vaultLocation := filepath.Join(dir, vaultName)
-			err = store.CreateVault(vaultLocation, password)
+			err = core.CreateVaultHelper(vaultLocation, password, vaultName)
 			if err != nil {
 				return fmt.Errorf("unable to create vault: %w", err)
 			}
