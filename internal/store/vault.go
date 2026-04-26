@@ -9,7 +9,7 @@ import (
 	"github.com/parthivsaikia/enmasec/internal/utils"
 )
 
-func CreateVault(vaultLocation, password string) error {
+func CreateVault(vaultLocation, password string, encryptedKey []byte) error {
 	if err := os.MkdirAll(vaultLocation, 0o700); err != nil {
 		return fmt.Errorf("unable to create vault %w", err)
 	}
@@ -26,13 +26,7 @@ func CreateVault(vaultLocation, password string) error {
 		return fmt.Errorf("unable to create index file %w", err)
 	}
 	defer iFile.Close()
-
-	secretKey := encryption.RandomByte(32)
-	data, err := encryption.EncryptAge(secretKey, password)
-	if err != nil {
-		return fmt.Errorf("unable to encrypt key file: %w", err)
-	}
-	if _, err := kf.Write(data); err != nil {
+	if _, err := kf.Write(encryptedKey); err != nil {
 		return fmt.Errorf("unable to write to file %s", kf.Name())
 	}
 	return nil
@@ -56,8 +50,8 @@ func Unlock(vaultPath, password string) ([]byte, error) {
 	return key, nil
 }
 
-func DecryptIndexFile(vault string, password string) ([]byte, error) {
-	indexFile := filepath.Join(vault, "index.age")
+func DecryptIndexFile(vaultPath string, password string) ([]byte, error) {
+	indexFile := filepath.Join(vaultPath, "index.age")
 	if !utils.CheckFileExists(indexFile) {
 		return nil, fmt.Errorf("index file doesn't exist")
 	}
@@ -70,4 +64,16 @@ func DecryptIndexFile(vault string, password string) ([]byte, error) {
 		return nil, fmt.Errorf("unable to decrypt map content: %w", err)
 	}
 	return data, nil
+}
+
+func WriteIndexFile(vaultPath string, data []byte) error {
+	indexFile := filepath.Join(vaultPath, "index.age")
+	if !utils.CheckFileExists(indexFile) {
+		return fmt.Errorf("index file doesn't exist")
+	}
+	err := os.WriteFile(indexFile, data, 0o700)
+	if err != nil {
+		return fmt.Errorf("couldn't write to index file")
+	}
+	return nil
 }
