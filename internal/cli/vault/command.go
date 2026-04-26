@@ -232,7 +232,7 @@ func newUpdateCommand() *cobra.Command {
 				return err
 			}
 
-			if !utils.CheckPasswordValid(newPassword) {
+			if !validation.CheckPasswordValid(newPassword) {
 				return fmt.Errorf("password not strong enough")
 			}
 
@@ -281,7 +281,7 @@ func newUpdateCommand() *cobra.Command {
 			}
 
 			if newPassword != "" {
-				if !utils.CheckPasswordValid(newPassword) {
+				if !validation.CheckPasswordValid(newPassword) {
 					return fmt.Errorf("password is not strong enough")
 				}
 				f := filepath.Join(newVaultLocation, "key.age")
