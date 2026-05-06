@@ -8,6 +8,7 @@ import (
 	"github.com/parthivsaikia/enmasec/internal/encryption"
 	"github.com/parthivsaikia/enmasec/internal/models"
 	"github.com/parthivsaikia/enmasec/internal/store"
+	"github.com/parthivsaikia/enmasec/internal/validation"
 )
 
 var LocationUUIDMap = models.BiMap{
@@ -16,7 +17,7 @@ var LocationUUIDMap = models.BiMap{
 }
 
 func InitIndexMap() {
-	biMapData, err := store.DecryptIndexFile(vault, password)
+	validation.
 }
 
 func CreateVaultHelper(vaultLocation, password, vaultName string) error {
