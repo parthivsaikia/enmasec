@@ -6,10 +6,9 @@ import (
 	"path/filepath"
 
 	"github.com/parthivsaikia/enmasec/internal/encryption"
-	"github.com/parthivsaikia/enmasec/internal/utils"
 )
 
-func CreateVault(vaultLocation, password string, encryptedKey []byte) error {
+func CreateVaultStore(vaultLocation, password string, encryptedKey []byte) error {
 	if err := os.MkdirAll(vaultLocation, 0o700); err != nil {
 		return fmt.Errorf("unable to create vault %w", err)
 	}
@@ -34,7 +33,7 @@ func CreateVault(vaultLocation, password string, encryptedKey []byte) error {
 
 func Unlock(vaultPath, password string) ([]byte, error) {
 	keyfile := filepath.Join(vaultPath, "key.age")
-	if !utils.CheckFileExists(keyfile) {
+	if !CheckFileExists(keyfile) {
 		fmt.Println(keyfile)
 		return nil, fmt.Errorf("key file doesn't exist")
 	}
@@ -52,7 +51,7 @@ func Unlock(vaultPath, password string) ([]byte, error) {
 
 func DecryptIndexFile(vaultPath string, password string) ([]byte, error) {
 	indexFile := filepath.Join(vaultPath, "index.age")
-	if !utils.CheckFileExists(indexFile) {
+	if !CheckFileExists(indexFile) {
 		return nil, fmt.Errorf("index file doesn't exist")
 	}
 	content, err := os.ReadFile(indexFile)
@@ -68,7 +67,7 @@ func DecryptIndexFile(vaultPath string, password string) ([]byte, error) {
 
 func WriteIndexFile(vaultPath string, data []byte) error {
 	indexFile := filepath.Join(vaultPath, "index.age")
-	if !utils.CheckFileExists(indexFile) {
+	if !CheckFileExists(indexFile) {
 		return fmt.Errorf("index file doesn't exist")
 	}
 	err := os.WriteFile(indexFile, data, 0o700)

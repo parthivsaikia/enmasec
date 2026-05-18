@@ -2,13 +2,15 @@ package validation
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 	"unicode"
 
 	"github.com/parthivsaikia/enmasec/internal/config"
+	"github.com/parthivsaikia/enmasec/internal/store"
 )
 
-func ValidateVaultName(vaultName string) error {
+func ValidateVault(vaultName, dir string) error {
 	if vaultName == "" {
 		return fmt.Errorf("vault name cannot be empty")
 	}
@@ -17,6 +19,10 @@ func ValidateVaultName(vaultName string) error {
 	}
 	if location, ok := config.Config.Vaults[vaultName]; ok {
 		return fmt.Errorf("vault with name %s already exists in %s", vaultName, location)
+	}
+	vaultLocation := filepath.Join(dir, vaultName)
+	if store.CheckFileExists(vaultLocation) {
+		return fmt.Errorf("vault %s already exists at %s", vaultName, vaultLocation)
 	}
 	return nil
 }

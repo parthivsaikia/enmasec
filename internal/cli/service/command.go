@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/parthivsaikia/enmasec/internal/cli/components"
 	"github.com/parthivsaikia/enmasec/internal/config"
 	"github.com/parthivsaikia/enmasec/internal/core"
 	"github.com/parthivsaikia/enmasec/internal/store"
-	"github.com/parthivsaikia/enmasec/internal/utils"
 	"github.com/parthivsaikia/enmasec/internal/validation"
 	"github.com/spf13/cobra"
 )
@@ -41,7 +41,7 @@ func newAddCmd() *cobra.Command {
 				return err
 			}
 			servicePath := filepath.Join(config.Config.Vaults[vault], args[0])
-			if utils.CheckFileExists(servicePath) {
+			if store.CheckFileExists(servicePath) {
 				return fmt.Errorf("service %s already exists", args[0])
 			}
 
@@ -53,7 +53,7 @@ func newAddCmd() *cobra.Command {
 				return err
 			}
 			vaultLocation := config.Config.Vaults[vault]
-			password, err := utils.PasswordPrompt(fmt.Sprintf("enter master password for vault %s", vault))
+			password, err := components.PasswordPrompt(fmt.Sprintf("enter master password for vault %s", vault))
 			if err != nil {
 				return fmt.Errorf("unable to capture password %w", err)
 			}
