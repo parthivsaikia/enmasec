@@ -34,3 +34,17 @@ func CreateVault(dir, vaultName, password string) error {
 	}
 	return nil
 }
+
+func UnlockVault(vaultName, password string) ([]byte, error) {
+	vaultLocation := config.Config.Vaults[vaultName]
+	keyFile := filepath.Join(vaultLocation, "key.age")
+	content, err := store.ReadFile(keyFile)
+	if err != nil {
+		return nil, err
+	}
+	data, err := encryption.DecryptAge(password, content)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}

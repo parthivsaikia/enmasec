@@ -123,12 +123,11 @@ func newCheckoutCommand() *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			vaultName := args[0]
-			vaultPath := config.Config.Vaults[vaultName]
 			password, err := components.PasswordPrompt(fmt.Sprintf("Enter password for vault %s: ", vaultName))
 			if err != nil {
 				return err
 			}
-			if _, err := store.Unlock(vaultPath, password); err != nil {
+			if _, err := core.UnlockVault(vaultName, password); err != nil {
 				return fmt.Errorf("unable to unlock vault: %w", err)
 			}
 
@@ -236,7 +235,7 @@ func newUpdateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			key, err := store.Unlock(config.Config.Vaults[vaultName], password)
+			key, err := core.UnlockVault(vaultName, password)
 			if err != nil {
 				return err
 			}

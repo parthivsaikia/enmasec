@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"github.com/parthivsaikia/enmasec/internal/encryption"
 )
 
 func CreateVaultStore(vaultLocation, password string, encryptedKey []byte) error {
@@ -31,38 +29,15 @@ func CreateVaultStore(vaultLocation, password string, encryptedKey []byte) error
 	return nil
 }
 
-func Unlock(vaultPath, password string) ([]byte, error) {
-	keyfile := filepath.Join(vaultPath, "key.age")
-	if !CheckFileExists(keyfile) {
-		fmt.Println(keyfile)
-		return nil, fmt.Errorf("key file doesn't exist")
+func ReadFile(filePath string) ([]byte, error) {
+	if !CheckFileExists(filePath) {
+		return nil, fmt.Errorf("%s file doesn't exist", filePath)
 	}
-	content, err := os.ReadFile(keyfile)
+	content, err := os.ReadFile(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read file %s: %w", keyfile, err)
+		return nil, fmt.Errorf("unable to read file %s: %w", filePath, err)
 	}
-
-	key, err := encryption.DecryptAge(password, content)
-	if err != nil {
-		return nil, fmt.Errorf("unable to decrypt file: %w", err)
-	}
-	return key, nil
-}
-
-func DecryptIndexFile(vaultPath string, password string) ([]byte, error) {
-	indexFile := filepath.Join(vaultPath, "index.age")
-	if !CheckFileExists(indexFile) {
-		return nil, fmt.Errorf("index file doesn't exist")
-	}
-	content, err := os.ReadFile(indexFile)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read file %s: %w", indexFile, err)
-	}
-	data, err := encryption.DecryptAge(password, content)
-	if err != nil {
-		return nil, fmt.Errorf("unable to decrypt map content: %w", err)
-	}
-	return data, nil
+	return content, nil
 }
 
 func WriteIndexFile(vaultPath string, data []byte) error {
