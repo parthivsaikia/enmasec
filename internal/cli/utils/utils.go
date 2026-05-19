@@ -1,10 +1,12 @@
-package components
+package utils
 
 import (
 	"fmt"
 	"strings"
 	"syscall"
 
+	"github.com/parthivsaikia/enmasec/internal/config"
+	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
 
@@ -17,4 +19,15 @@ func PasswordPrompt(prompt string) (string, error) {
 	}
 	fmt.Println()
 	return strings.TrimSpace(string(bytes)), nil
+}
+
+func ResolveVault(cmd *cobra.Command) (string, error) {
+	vault, err := cmd.Flags().GetString("vault")
+	if err != nil {
+		return "", err
+	}
+	if vault == "" {
+		vault = config.Config.CurrentVault
+	}
+	return vault, err
 }

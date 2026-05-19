@@ -48,3 +48,15 @@ func UnlockVault(vaultName, password string) ([]byte, error) {
 	}
 	return data, nil
 }
+
+func CheckoutVault(vaultName string) error {
+	if _, ok := config.Config.Vaults[vaultName]; !ok {
+		return fmt.Errorf("vault doesn't exist")
+	} else {
+		config.Config.CurrentVault = vaultName
+		if err := config.Save(); err != nil {
+			return fmt.Errorf("unable to save config: %w", err)
+		}
+	}
+	return nil
+}

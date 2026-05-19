@@ -7,7 +7,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/table"
-	"github.com/parthivsaikia/enmasec/internal/cli/components"
+	"github.com/parthivsaikia/enmasec/internal/cli/utils"
 	"github.com/parthivsaikia/enmasec/internal/config"
 	"github.com/parthivsaikia/enmasec/internal/core"
 	"github.com/parthivsaikia/enmasec/internal/encryption"
@@ -63,20 +63,24 @@ func newInitCommand() *cobra.Command {
 			}
 
 			// validate the name of the vault
-			if err := validation.ValidateVault(vaultName, dir); err != nil {
+			if err := validation.ValidateVaultName(vaultName); err != nil {
 				return fmt.Errorf("validation error: %w", err)
+			}
+			vaultLocation := filepath.Join(dir, vaultName)
+			if store.CheckFileExists(vaultLocation) {
+				return fmt.Errorf("validation error: vault already exists")
 			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			password, err := components.PasswordPrompt("Set your master password: ")
+			password, err := utils.PasswordPrompt("Set your master password: ")
 			if err != nil {
 				return err
 			}
 			if !validation.CheckPasswordValid(password) {
 				return fmt.Errorf("validation error: password not strong enough")
 			}
-			confirmPassword, err := components.PasswordPrompt("Enter master password again: ")
+			confirmPassword, err := utils.PasswordPrompt("Enter master password again: ")
 			if err != nil {
 				return err
 			}
@@ -93,13 +97,12 @@ func newInitCommand() *cobra.Command {
 				dir = store.GetEnmasecDirLocation()
 			}
 
-			vaultLocation := filepath.Join(dir, vaultName)
-			err = core.CreateVaultHelper(vaultLocation, password, vaultName)
+			err = core.CreateVault(dir, vaultName, password)
 			if err != nil {
 				return fmt.Errorf("unable to create vault: %w", err)
 			}
 
-			fmt.Printf("Created vault at %s", vaultLocation)
+			fmt.Printf("Created vault %s at %s", vaultName, dir)
 			return nil
 		},
 	}
@@ -113,17 +116,14 @@ func newCheckoutCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			vaultName := args[0]
-			vaultLocation := config.Config.Vaults[vaultName]
-
-			if !store.CheckFileExists(vaultLocation) {
-				return fmt.Errorf("vault %s doesn't exist", vaultName)
+			if err := validation.ValidateVaultLocation(vaultName); err != nil {
+				return fmt.Errorf("validation error: %w", err)
 			}
-
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			vaultName := args[0]
-			password, err := components.PasswordPrompt(fmt.Sprintf("Enter password for vault %s: ", vaultName))
+			password, err := utils.PasswordPrompt(fmt.Sprintf("Enter password for vault %s: ", vaultName))
 			if err != nil {
 				return err
 			}
@@ -131,16 +131,10 @@ func newCheckoutCommand() *cobra.Command {
 				return fmt.Errorf("unable to unlock vault: %w", err)
 			}
 
-			if _, ok := config.Config.Vaults[vaultName]; !ok {
-			} else {
-				config.Config.CurrentVault = vaultName
-				if err := config.Save(); err != nil {
-					return err
-				}
+			if err := core.CheckoutVault(vaultName); err != nil {
+				return fmt.Errorf("unable to checkout vault: %w", err)
 			}
-
 			fmt.Printf("Switched to vault %s", vaultName)
-
 			return nil
 		},
 	}
@@ -231,7 +225,7 @@ func newUpdateCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			vaultName := args[0]
 			vaultLocation := config.Config.Vaults[vaultName]
-			password, err := components.PasswordPrompt(fmt.Sprintf("Enter master password for vault %s", vaultName))
+			password, err := utils.PasswordPrompt(fmt.Sprintf("Enter master password for vault %s", vaultName))
 			if err != nil {
 				return err
 			}
