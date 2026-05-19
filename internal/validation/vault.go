@@ -22,12 +22,9 @@ func ValidateVaultName(vaultName string) error {
 	return nil
 }
 
-func ValidateVaultLocationFromConfig(vaultName string) error {
+func ValidateVaultLocationFromConfig(vaultName string) bool {
 	vaultLocation := config.Config.Vaults[vaultName]
-	if !store.CheckFileExists(vaultLocation) {
-		return fmt.Errorf("vault doesn't exist")
-	}
-	return nil
+	return store.CheckFileExists(vaultLocation)
 }
 
 func CheckPasswordValid(password string) bool {

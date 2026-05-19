@@ -2,13 +2,10 @@ package vault
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/parthivsaikia/enmasec/internal/cli/components"
-	"github.com/parthivsaikia/enmasec/internal/config"
 	"github.com/parthivsaikia/enmasec/internal/core"
-	"github.com/parthivsaikia/enmasec/internal/encryption"
 	"github.com/parthivsaikia/enmasec/internal/store"
 	"github.com/parthivsaikia/enmasec/internal/validation"
 	"github.com/spf13/cobra"
@@ -45,6 +42,12 @@ func newInitCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			if dir != "" {
+				if !store.CheckFileExists(dir) {
+					return fmt.Errorf("directory %s doesn't exist", dir)
+				}
+			}
+
 			if dir == "" {
 				dir = store.GetEnmasecDirLocation()
 			}
@@ -103,9 +106,11 @@ func newCheckoutCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			vaultName := args[0]
-			if err := validation.ValidateVaultLocationFromConfig(vaultName); err != nil {
-				return fmt.Errorf("validation error: %w", err)
+
+			if validation.ValidateVaultLocationFromConfig(vaultName) {
+				return fmt.Errorf("vault %s doesn't exist", vaultName)
 			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -150,13 +155,24 @@ func newUpdateCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			vaultName := args[0]
-			if err := validation.ValidateVaultLocationFromConfig(vaultName); err != nil {
-				return err
+			if validation.ValidateVaultLocationFromConfig(vaultName) {
+				return fmt.Errorf("vault %s doesn't exist", vaultName)
 			}
-
 			newDir, err := cmd.Flags().GetString("dir")
 			if err != nil {
 				return err
+			}
+			newName, err := cmd.Flags().GetString("name")
+			if err != nil {
+				return err
+			}
+			newPassword, err := cmd.Flags().GetString("password")
+			if err != nil {
+				return err
+			}
+
+			if newDir == "" && newName == "" && newPassword == "" {
+				return fmt.Errorf("no flags provided")
 			}
 
 			if newDir != "" {
@@ -165,29 +181,22 @@ func newUpdateCommand() *cobra.Command {
 				}
 			}
 
-			newName, err := cmd.Flags().GetString("name")
-			if err != nil {
-				return err
+			if newName != "" {
+				if validation.ValidateVaultLocationFromConfig(newName) {
+					return fmt.Errorf("vault with name %s already exist", newName)
+				}
 			}
 
-			if _, ok := config.Config.Vaults[newName]; ok {
-				return fmt.Errorf("vault with name %s already exist", newName)
-			}
-
-			newPassword, err := cmd.Flags().GetString("password")
-			if err != nil {
-				return err
-			}
-
-			if !validation.CheckPasswordValid(newPassword) {
-				return fmt.Errorf("password not strong enough")
+			if newPassword != "" {
+				if !validation.CheckPasswordValid(newPassword) {
+					return fmt.Errorf("password not strong enough")
+				}
 			}
 
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			vaultName := args[0]
-			vaultLocation := config.Config.Vaults[vaultName]
 			password, err := components.PasswordPrompt(fmt.Sprintf("Enter master password for vault %s", vaultName))
 			if err != nil {
 				return err
@@ -201,50 +210,17 @@ func newUpdateCommand() *cobra.Command {
 				return err
 			}
 
-			if newDir == "" {
-				newDir = filepath.Dir(vaultLocation)
-			}
-
 			newName, err := cmd.Flags().GetString("name")
 			if err != nil {
 				return err
 			}
-
-			if newName == "" {
-				newName = vaultName
-			}
-
-			newVaultLocation := filepath.Join(newDir, newName)
-
-			if newVaultLocation != "" {
-				if err := os.Rename(vaultLocation, newVaultLocation); err != nil {
-					return err
-				}
-			}
-
 			newPassword, err := cmd.Flags().GetString("password")
 			if err != nil {
 				return err
 			}
 
-			if newPassword != "" {
-				if !validation.CheckPasswordValid(newPassword) {
-					return fmt.Errorf("password is not strong enough")
-				}
-				f := filepath.Join(newVaultLocation, "key.age")
-				data, err := encryption.EncryptAge(key, newPassword)
-				if err != nil {
-					return err
-				}
-				err = os.WriteFile(f, data, 0o666)
-				if err != nil {
-					return err
-				}
-			}
-
-			config.Config.Vaults[newName] = newVaultLocation
-			if err := config.Save(); err != nil {
-				return err
+			if err := core.UpdateVault(vaultName, newName, newDir, newPassword, key); err != nil {
+				return fmt.Errorf("unable to update vault: %w", err)
 			}
 
 			return nil

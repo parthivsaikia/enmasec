@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/google/uuid"
@@ -10,6 +11,7 @@ import (
 	"github.com/parthivsaikia/enmasec/internal/encryption"
 	"github.com/parthivsaikia/enmasec/internal/models"
 	"github.com/parthivsaikia/enmasec/internal/store"
+	"github.com/parthivsaikia/enmasec/internal/validation"
 )
 
 var LocationUUIDMap = models.BiMap{
@@ -74,5 +76,46 @@ func ListVaults() error {
 	if err := components.VaultTable(currentVaultRow, rows); err != nil {
 		return err
 	}
+	return nil
+}
+
+func UpdateVault(vaultName, newVaultName, newDir, newPassword string, key []byte) error {
+	vaultLocation := config.Config.Vaults[vaultName]
+	if newDir == "" {
+		newDir = filepath.Dir(vaultLocation)
+	}
+
+	if newVaultName == "" {
+		newVaultName = vaultName
+	}
+
+	newVaultLocation := filepath.Join(newDir, newVaultName)
+
+	if newVaultLocation != "" {
+		if err := os.Rename(vaultLocation, newVaultLocation); err != nil {
+			return err
+		}
+	}
+
+	if newPassword != "" {
+		if !validation.CheckPasswordValid(newPassword) {
+			return fmt.Errorf("password is not strong enough")
+		}
+		f := filepath.Join(newVaultLocation, "key.age")
+		data, err := encryption.EncryptAge(key, newPassword)
+		if err != nil {
+			return err
+		}
+		err = os.WriteFile(f, data, 0o666)
+		if err != nil {
+			return err
+		}
+	}
+
+	config.Config.Vaults[newVaultName] = newVaultLocation
+	if err := config.Save(); err != nil {
+		return err
+	}
+
 	return nil
 }
