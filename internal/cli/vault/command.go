@@ -57,8 +57,8 @@ func newInitCommand() *cobra.Command {
 				return fmt.Errorf("validation error: %w", err)
 			}
 			vaultLocation := filepath.Join(dir, vaultName)
-			if !store.CheckFileExists(vaultLocation) {
-				return fmt.Errorf("vault doesn't exist")
+			if store.CheckFileExists(vaultLocation) {
+				return fmt.Errorf("vault already exists")
 			}
 			return nil
 		},
@@ -107,7 +107,7 @@ func newCheckoutCommand() *cobra.Command {
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			vaultName := args[0]
 
-			if validation.ValidateVaultLocationFromConfig(vaultName) {
+			if !validation.ValidateVaultLocationFromConfig(vaultName) {
 				return fmt.Errorf("vault %s doesn't exist", vaultName)
 			}
 
@@ -155,7 +155,7 @@ func newUpdateCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			vaultName := args[0]
-			if validation.ValidateVaultLocationFromConfig(vaultName) {
+			if !validation.ValidateVaultLocationFromConfig(vaultName) {
 				return fmt.Errorf("vault %s doesn't exist", vaultName)
 			}
 			newDir, err := cmd.Flags().GetString("dir")
