@@ -5,26 +5,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"charm.land/lipgloss/v2"
-	"charm.land/lipgloss/v2/table"
-	"github.com/parthivsaikia/enmasec/internal/cli/utils"
+	"github.com/parthivsaikia/enmasec/internal/cli/components"
 	"github.com/parthivsaikia/enmasec/internal/config"
 	"github.com/parthivsaikia/enmasec/internal/core"
 	"github.com/parthivsaikia/enmasec/internal/encryption"
 	"github.com/parthivsaikia/enmasec/internal/store"
 	"github.com/parthivsaikia/enmasec/internal/validation"
 	"github.com/spf13/cobra"
-)
-
-var (
-	purple = lipgloss.Color("99")
-	gray   = lipgloss.Color("245")
-	red    = lipgloss.Red
-
-	headerStyle  = lipgloss.NewStyle().Foreground(purple).Bold(true).Align(lipgloss.Center)
-	cellStyle    = lipgloss.NewStyle().Padding(0, 1)
-	oddRowStyle  = cellStyle.Foreground(gray)
-	evenRowStyle = cellStyle.Foreground(red)
 )
 
 func NewCommand() *cobra.Command {
@@ -73,14 +60,14 @@ func newInitCommand() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			password, err := utils.PasswordPrompt("Set your master password: ")
+			password, err := components.PasswordPrompt("Set your master password: ")
 			if err != nil {
 				return err
 			}
 			if !validation.CheckPasswordValid(password) {
 				return fmt.Errorf("validation error: password not strong enough")
 			}
-			confirmPassword, err := utils.PasswordPrompt("Enter master password again: ")
+			confirmPassword, err := components.PasswordPrompt("Enter master password again: ")
 			if err != nil {
 				return err
 			}
@@ -123,7 +110,7 @@ func newCheckoutCommand() *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			vaultName := args[0]
-			password, err := utils.PasswordPrompt(fmt.Sprintf("Enter password for vault %s: ", vaultName))
+			password, err := components.PasswordPrompt(fmt.Sprintf("Enter password for vault %s: ", vaultName))
 			if err != nil {
 				return err
 			}
@@ -147,30 +134,8 @@ func newListCommand() *cobra.Command {
 		Short: "List all the available vaults",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var rows [][]string
-			var currentVaultRow int
-			for k, v := range config.Config.Vaults {
-				rows = append(rows, []string{k, v})
-				if k == config.Config.CurrentVault {
-					currentVaultRow = len(rows) - 1
-				}
-			}
-			t := table.New().
-				Border(lipgloss.NormalBorder()).
-				Headers("Name", "Location").
-				StyleFunc(func(row, col int) lipgloss.Style {
-					switch {
-					case row == table.HeaderRow:
-						return headerStyle
-					case row == currentVaultRow:
-						return evenRowStyle
-					default:
-						return oddRowStyle
-					}
-				}).
-				Rows(rows...)
-			if _, err := lipgloss.Println(t); err != nil {
-				return err
+			if err := core.ListVaults(); err != nil {
+				return fmt.Errorf("unable to list vaults: %w", err)
 			}
 			return nil
 		},
@@ -225,7 +190,7 @@ func newUpdateCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			vaultName := args[0]
 			vaultLocation := config.Config.Vaults[vaultName]
-			password, err := utils.PasswordPrompt(fmt.Sprintf("Enter master password for vault %s", vaultName))
+			password, err := components.PasswordPrompt(fmt.Sprintf("Enter master password for vault %s", vaultName))
 			if err != nil {
 				return err
 			}

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/parthivsaikia/enmasec/internal/cli/utils"
+	"github.com/parthivsaikia/enmasec/internal/cli/components"
 	"github.com/parthivsaikia/enmasec/internal/config"
 	"github.com/parthivsaikia/enmasec/internal/core"
 	"github.com/parthivsaikia/enmasec/internal/store"
@@ -36,7 +36,7 @@ func newAddCmd() *cobra.Command {
 			if err := validation.ValidateServiceName(args[0]); err != nil {
 				return fmt.Errorf("invalid service name: %w", err)
 			}
-			vault, err := utils.ResolveVault(cmd)
+			vault, err := resolveVault(cmd)
 			if err != nil {
 				return err
 			}
@@ -48,12 +48,12 @@ func newAddCmd() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			vault, err := utils.ResolveVault(cmd)
+			vault, err := resolveVault(cmd)
 			if err != nil {
 				return err
 			}
 			vaultLocation := config.Config.Vaults[vault]
-			password, err := utils.PasswordPrompt(fmt.Sprintf("enter master password for vault %s", vault))
+			password, err := components.PasswordPrompt(fmt.Sprintf("enter master password for vault %s", vault))
 			if err != nil {
 				return fmt.Errorf("unable to capture password %w", err)
 			}
@@ -69,4 +69,15 @@ func newAddCmd() *cobra.Command {
 	}
 	addCmd.Flags().String("vault", "", "vault where service needs to be added.")
 	return addCmd
+}
+
+func resolveVault(cmd *cobra.Command) (string, error) {
+	vault, err := cmd.Flags().GetString("vault")
+	if err != nil {
+		return "", err
+	}
+	if vault == "" {
+		vault = config.Config.CurrentVault
+	}
+	return vault, err
 }

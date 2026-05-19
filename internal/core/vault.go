@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/google/uuid"
+	"github.com/parthivsaikia/enmasec/internal/cli/components"
 	"github.com/parthivsaikia/enmasec/internal/config"
 	"github.com/parthivsaikia/enmasec/internal/encryption"
 	"github.com/parthivsaikia/enmasec/internal/models"
@@ -57,6 +58,21 @@ func CheckoutVault(vaultName string) error {
 		if err := config.Save(); err != nil {
 			return fmt.Errorf("unable to save config: %w", err)
 		}
+	}
+	return nil
+}
+
+func ListVaults() error {
+	var rows [][]string
+	var currentVaultRow int
+	for k, v := range config.Config.Vaults {
+		rows = append(rows, []string{k, v})
+		if k == config.Config.CurrentVault {
+			currentVaultRow = len(rows) - 1
+		}
+	}
+	if err := components.VaultTable(currentVaultRow, rows); err != nil {
+		return err
 	}
 	return nil
 }
