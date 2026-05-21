@@ -1,6 +1,8 @@
 package models
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+)
 
 type Account struct {
 	Username  string
@@ -14,22 +16,23 @@ type Config struct {
 	Vaults       map[string]string `yaml:"vaults"`
 }
 
-type BiMap struct {
-	ForwardMap map[uuid.UUID]string
-	ReverseMap map[string]uuid.UUID
+type VaultIndex struct {
+	Version  int                         `json:"version"`
+	Services map[uuid.UUID]*ServiceEntry `json:"services"`
 }
 
-func (b *BiMap) Put(uuid uuid.UUID, path string) {
-	b.ForwardMap[uuid] = path
-	b.ReverseMap[path] = uuid
+type ServiceEntry struct {
+	Name     string                      `json:"name"`
+	Accounts map[uuid.UUID]*AccountEntry `json:"accounts"`
 }
 
-func (b *BiMap) GetByKey(key uuid.UUID) (string, bool) {
-	v, ok := b.ForwardMap[key]
-	return v, ok
+type AccountEntry struct {
+	Name string `json:"name"`
 }
 
-func (b *BiMap) GetByVal(val string) (uuid.UUID, bool) {
-	k, ok := b.ReverseMap[val]
-	return k, ok
+type RuntimeIndex struct {
+	ServiceNameToID map[string]uuid.UUID
+	ServiceIDToName map[uuid.UUID]string
+	AccountNameToID map[uuid.UUID]map[string]uuid.UUID
+	AccountIDToName map[uuid.UUID]map[uuid.UUID]string
 }

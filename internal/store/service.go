@@ -13,6 +13,7 @@ func CreateService(vaultPath, serviceName string, indexMapData []byte) error {
 	// write the given data back to the index file
 	err := WriteIndexFile(vaultPath, indexMapData)
 	if err != nil {
+		os.Remove(servicePath)
 		return err
 	}
 	return nil

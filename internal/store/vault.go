@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 )
 
-func CreateVaultStore(vaultLocation, password string, encryptedKey []byte) error {
+func CreateVaultStore(vaultLocation, password string, encryptedKey, encryptedIndexByte []byte) error {
 	if err := os.MkdirAll(vaultLocation, 0o700); err != nil {
 		return fmt.Errorf("unable to create vault %w", err)
 	}
@@ -25,6 +25,10 @@ func CreateVaultStore(vaultLocation, password string, encryptedKey []byte) error
 	defer iFile.Close()
 	if _, err := kf.Write(encryptedKey); err != nil {
 		return fmt.Errorf("unable to write to file %s", kf.Name())
+	}
+
+	if _, err := iFile.Write(encryptedIndexByte); err != nil {
+		return fmt.Errorf("unable to write to file %s", iFile.Name())
 	}
 	return nil
 }

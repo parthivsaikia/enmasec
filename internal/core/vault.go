@@ -1,6 +1,7 @@
 package core
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,11 +15,6 @@ import (
 	"github.com/parthivsaikia/enmasec/internal/validation"
 )
 
-var LocationUUIDMap = models.BiMap{
-	ForwardMap: map[uuid.UUID]string{},
-	ReverseMap: map[string]uuid.UUID{},
-}
-
 func CreateVault(dir, vaultName, password string) error {
 	vaultLocation := filepath.Join(dir, vaultName)
 	secretKey := encryption.RandomByte(32)
@@ -26,7 +22,16 @@ func CreateVault(dir, vaultName, password string) error {
 	if err != nil {
 		return fmt.Errorf("unable to encrypt: %w", err)
 	}
-	err = store.CreateVaultStore(vaultLocation, password, encryptedKey)
+	emptyIndex := &models.VaultIndex{
+		Version:  1,
+		Services: make(map[uuid.UUID]*models.ServiceEntry),
+	}
+	indexByte, err := json.Marshal(emptyIndex)
+	if err != nil {
+		return fmt.Errorf("unable to encrypt index data: %w", err)
+	}
+	encryptedIndexByte, err := encryption.EncryptAge(indexByte, string(secretKey))
+	err = store.CreateVaultStore(vaultLocation, password, encryptedKey, encryptedIndexByte)
 	if err != nil {
 		return err
 	}
@@ -91,7 +96,7 @@ func UpdateVault(vaultName, newVaultName, newDir, newPassword string, key []byte
 
 	newVaultLocation := filepath.Join(newDir, newVaultName)
 
-	if newVaultLocation != "" {
+	if newVaultLocation != vaultLocation {
 		if err := os.Rename(vaultLocation, newVaultLocation); err != nil {
 			return err
 		}
@@ -113,9 +118,27 @@ func UpdateVault(vaultName, newVaultName, newDir, newPassword string, key []byte
 	}
 
 	config.Config.Vaults[newVaultName] = newVaultLocation
+	config.Config.CurrentVault = newVaultName
+	if newVaultName != vaultName {
+		delete(config.Config.Vaults, vaultName)
+	}
 	if err := config.Save(); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func DecryptVaultIndex(vaultName, key string) ([]byte, error) {
+	vaultLocation := config.Config.Vaults[vaultName]
+	indexFilePath := filepath.Join(vaultLocation, "index.age")
+	indexBytes, err := store.ReadFile(indexFilePath)
+	if err != nil {
+		return nil, err
+	}
+	indexData, err := encryption.DecryptAge(key, indexBytes)
+	if err != nil {
+		return nil, err
+	}
+	return indexData, nil
 }

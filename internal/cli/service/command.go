@@ -2,12 +2,10 @@ package service
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/parthivsaikia/enmasec/internal/cli/components"
 	"github.com/parthivsaikia/enmasec/internal/config"
 	"github.com/parthivsaikia/enmasec/internal/core"
-	"github.com/parthivsaikia/enmasec/internal/store"
 	"github.com/parthivsaikia/enmasec/internal/validation"
 	"github.com/spf13/cobra"
 )
@@ -33,37 +31,47 @@ func newAddCmd() *cobra.Command {
 		Short: "Add a new service",
 		Args:  cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if err := validation.ValidateServiceName(args[0]); err != nil {
+			serviceName := args[0]
+			if err := validation.ValidateServiceName(serviceName); err != nil {
 				return fmt.Errorf("invalid service name: %w", err)
-			}
-			vault, err := resolveVault(cmd)
-			if err != nil {
-				return err
-			}
-			servicePath := filepath.Join(config.Config.Vaults[vault], args[0])
-			if store.CheckFileExists(servicePath) {
-				return fmt.Errorf("service %s already exists", args[0])
 			}
 
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			serviceName := args[0]
 			vault, err := resolveVault(cmd)
 			if err != nil {
 				return err
 			}
-			vaultLocation := config.Config.Vaults[vault]
+
 			password, err := components.PasswordPrompt(fmt.Sprintf("enter master password for vault %s", vault))
 			if err != nil {
 				return fmt.Errorf("unable to capture password %w", err)
 			}
-			if _, err := core.UnlockVault(vault, password); err != nil {
+			key, err := core.UnlockVault(vault, password)
+			if err != nil {
 				return fmt.Errorf("unable to unlock vault: %w", err)
 			}
-			if err := core.ServiceCreationHelper(vaultLocation, args[0], password); err != nil {
+
+			indexData, err := core.DecryptVaultIndex(vault, string(key))
+			if err != nil {
+				return err
+			}
+
+			vi, rt, err := core.OpenVaultIndex(indexData)
+			if err != nil {
+				return err
+			}
+
+			if _, ok := rt.ServiceNameToID[serviceName]; ok {
+				return fmt.Errorf("service %s already exists", serviceName)
+			}
+
+			if err := core.CreateService(vault, serviceName, string(key), rt, vi); err != nil {
 				return fmt.Errorf("unable to create service: %w", err)
 			}
-			fmt.Printf("created service %s successfully.", args[0])
+			fmt.Printf("created service %s successfully.", serviceName)
 			return nil
 		},
 	}
