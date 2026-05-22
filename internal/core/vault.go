@@ -203,5 +203,8 @@ func DeleteVault(vaultName string) error {
 	if config.Config.CurrentVault == vaultName {
 		config.Config.CurrentVault = ""
 	}
+	if err := config.Save(); err != nil {
+		return fmt.Errorf("unable to save config: %w", err)
+	}
 	return nil
 }
