@@ -16,7 +16,7 @@ import (
 )
 
 func CreateVault(dir, vaultName, password string) error {
-	vaultLocation := filepath.Join(dir, vaultName)
+	vaultPath := filepath.Join(dir, vaultName)
 	secretKey := encryption.RandomByte(32)
 	encryptedKey, err := encryption.EncryptAge(secretKey, password)
 	if err != nil {
@@ -31,12 +31,12 @@ func CreateVault(dir, vaultName, password string) error {
 		return fmt.Errorf("unable to encrypt index data: %w", err)
 	}
 	encryptedIndexByte, err := encryption.EncryptAge(indexByte, string(secretKey))
-	err = store.CreateVaultStore(vaultLocation, password, encryptedKey, encryptedIndexByte)
+	err = store.CreateVaultStore(vaultPath, password, encryptedKey, encryptedIndexByte)
 	if err != nil {
 		return err
 	}
 	config.Config.CurrentVault = vaultName
-	config.Config.Vaults[vaultName] = vaultLocation
+	config.Config.Vaults[vaultName] = vaultPath
 	if err := config.Save(); err != nil {
 		return fmt.Errorf("couldn't save config: %w", err)
 	}
@@ -44,8 +44,8 @@ func CreateVault(dir, vaultName, password string) error {
 }
 
 func UnlockVault(vaultName, password string) ([]byte, error) {
-	vaultLocation := config.Config.Vaults[vaultName]
-	keyFile := filepath.Join(vaultLocation, "key.age")
+	vaultPath := config.Config.Vaults[vaultName]
+	keyFile := filepath.Join(vaultPath, "key.age")
 	content, err := store.ReadFile(keyFile)
 	if err != nil {
 		return nil, err
@@ -85,9 +85,9 @@ func ListVaults() error {
 }
 
 func UpdateVault(vaultName, newVaultName, newDir, newPassword string, key []byte) error {
-	vaultLocation := config.Config.Vaults[vaultName]
+	vaultPath := config.Config.Vaults[vaultName]
 	if newDir == "" {
-		newDir = filepath.Dir(vaultLocation)
+		newDir = filepath.Dir(vaultPath)
 	}
 
 	if newVaultName == "" {
@@ -96,8 +96,8 @@ func UpdateVault(vaultName, newVaultName, newDir, newPassword string, key []byte
 
 	newVaultLocation := filepath.Join(newDir, newVaultName)
 
-	if newVaultLocation != vaultLocation {
-		if err := os.Rename(vaultLocation, newVaultLocation); err != nil {
+	if newVaultLocation != vaultPath {
+		if err := os.Rename(vaultPath, newVaultLocation); err != nil {
 			return err
 		}
 	}
@@ -130,8 +130,8 @@ func UpdateVault(vaultName, newVaultName, newDir, newPassword string, key []byte
 }
 
 func DecryptVaultIndex(vaultName, key string) ([]byte, error) {
-	vaultLocation := config.Config.Vaults[vaultName]
-	indexFilePath := filepath.Join(vaultLocation, "index.age")
+	vaultPath := config.Config.Vaults[vaultName]
+	indexFilePath := filepath.Join(vaultPath, "index.age")
 	indexBytes, err := store.ReadFile(indexFilePath)
 	if err != nil {
 		return nil, err
