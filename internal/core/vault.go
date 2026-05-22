@@ -142,3 +142,54 @@ func DecryptVaultIndex(vaultName, key string) ([]byte, error) {
 	}
 	return indexData, nil
 }
+
+func RepairVaultIndex(vaultName, key string) (*models.VaultIndex, *models.RuntimeIndex, error) {
+	vaultPath := config.Config.Vaults[vaultName]
+	indexFilePath := filepath.Join(vaultPath, "index.age")
+	indexData, err := DecryptVaultIndex(vaultName, string(key))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	vi, rt, err := OpenVaultIndex(indexData)
+	if err != nil {
+		return nil, nil, err
+	}
+	// repair services
+	for id, service := range vi.Services {
+		servicePath := filepath.Join(vaultPath, id.String())
+		if !store.CheckFileExists(servicePath) {
+			delete(vi.Services, id)
+			delete(rt.ServiceIDToName, id)
+			delete(rt.ServiceNameToID, service.Name)
+		} else {
+			for acctID := range service.Accounts {
+				acctPath := filepath.Join(servicePath, acctID.String()+".age")
+				if !store.CheckFileExists(acctPath) {
+					acctName := vi.Services[id].Accounts[acctID].Name
+					delete(vi.Services[id].Accounts, acctID)
+					delete(rt.AccountNameToID[id], acctName)
+					delete(rt.AccountIDToName[id], acctID)
+				}
+			}
+		}
+
+	}
+
+	indexBytes, err := json.Marshal(vi)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	encryptedIndexMapData, err := encryption.EncryptAge(indexBytes, key)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = store.WriteFile(encryptedIndexMapData, indexFilePath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return vi, rt, nil
+}

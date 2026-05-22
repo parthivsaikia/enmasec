@@ -230,3 +230,30 @@ func newUpdateCommand() *cobra.Command {
 	cmd.Flags().String("name", "", "change name of the vault.")
 	return cmd
 }
+
+func newRepairCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "repair",
+		Short: "repair any unsynced state",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vaultName := args[0]
+			password, err := components.PasswordPrompt(fmt.Sprintf("Enter master password for vault %s", vaultName))
+			if err != nil {
+				return err
+			}
+			key, err := core.UnlockVault(vaultName, password)
+			if err != nil {
+				return fmt.Errorf("unable to unlock vault %s: %w", vaultName, err)
+			}
+
+			_, _, err = core.RepairVaultIndex(vaultName, string(key))
+			if err != nil {
+				return nil
+			}
+
+			return nil
+		},
+	}
+	return cmd
+}

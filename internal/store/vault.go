@@ -44,14 +44,13 @@ func ReadFile(filePath string) ([]byte, error) {
 	return content, nil
 }
 
-func WriteIndexFile(vaultPath string, data []byte) error {
-	indexFile := filepath.Join(vaultPath, "index.age")
-	if !CheckFileExists(indexFile) {
-		return fmt.Errorf("index file doesn't exist")
+func WriteFile(data []byte, filePath string) error {
+	if !CheckFileExists(filePath) {
+		return fmt.Errorf("%s file doesn't exist", filePath)
 	}
-	err := os.WriteFile(indexFile, data, 0o700)
+	err := os.WriteFile(filePath, data, 0o600)
 	if err != nil {
-		return fmt.Errorf("couldn't write to index file")
+		return fmt.Errorf("unable to write to file %s", filePath)
 	}
 	return nil
 }
