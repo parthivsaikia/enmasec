@@ -28,6 +28,7 @@ func NewCommand() *cobra.Command {
 	cmd.AddCommand(newListCommand())
 	cmd.AddCommand(newUpdateCommand())
 	cmd.AddCommand(newRepairCommand())
+	cmd.AddCommand(newDeleteCommand())
 	cmd.PersistentFlags().String("dir", "", "add custom location for vault")
 	return cmd
 }
