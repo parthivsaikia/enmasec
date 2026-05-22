@@ -193,3 +193,15 @@ func RepairVaultIndex(vaultName, key string) (*models.VaultIndex, *models.Runtim
 
 	return vi, rt, nil
 }
+
+func DeleteVault(vaultName string) error {
+	vaultPath := config.Config.Vaults[vaultName]
+	if err := store.DeleteFile(vaultPath); err != nil {
+		return err
+	}
+	delete(config.Config.Vaults, vaultName)
+	if config.Config.CurrentVault == vaultName {
+		config.Config.CurrentVault = ""
+	}
+	return nil
+}

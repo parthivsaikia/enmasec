@@ -16,14 +16,14 @@ func ValidateVaultName(vaultName string) error {
 	if strings.Contains(vaultName, "/\\") {
 		return fmt.Errorf("vault name cannot contain / or \\")
 	}
-	if location, ok := config.Config.Vaults[vaultName]; ok {
-		return fmt.Errorf("vault with name %s already exists in %s", vaultName, location)
-	}
 	return nil
 }
 
 func ValidateVaultLocationFromConfig(vaultName string) bool {
-	vaultLocation := config.Config.Vaults[vaultName]
+	vaultLocation, ok := config.Config.Vaults[vaultName]
+	if !ok {
+		return false
+	}
 	return store.CheckFileExists(vaultLocation)
 }
 

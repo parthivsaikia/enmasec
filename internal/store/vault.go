@@ -54,3 +54,14 @@ func WriteFile(data []byte, filePath string) error {
 	}
 	return nil
 }
+
+func DeleteFile(filePath string) error {
+	if !CheckFileExists(filePath) {
+		return fmt.Errorf("%s file doesn't exist", filePath)
+	}
+	err := os.RemoveAll(filePath)
+	if err != nil {
+		return err
+	}
+	return nil
+}

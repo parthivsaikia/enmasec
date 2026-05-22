@@ -57,6 +57,9 @@ func newInitCommand() *cobra.Command {
 			if err := validation.ValidateVaultName(vaultName); err != nil {
 				return fmt.Errorf("validation error: %w", err)
 			}
+			if validation.ValidateVaultLocationFromConfig(vaultName) {
+				return fmt.Errorf("validation error: vault %s already exists", vaultName)
+			}
 			vaultLocation := filepath.Join(dir, vaultName)
 			if store.CheckFileExists(vaultLocation) {
 				return fmt.Errorf("vault already exists")
@@ -229,6 +232,38 @@ func newUpdateCommand() *cobra.Command {
 	}
 	cmd.Flags().String("password", "", "change password of the vault.")
 	cmd.Flags().String("name", "", "change name of the vault.")
+	return cmd
+}
+
+func newDeleteCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "delete",
+		Short: "delete a vault",
+		Args:  cobra.ExactArgs(1),
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			vaultName := args[0]
+			if !validation.ValidateVaultLocationFromConfig(vaultName) {
+				return fmt.Errorf("vault %s doesn't exist", vaultName)
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vaultName := args[0]
+			password, err := components.PasswordPrompt(fmt.Sprintf("enter master password for vault %s", vaultName))
+			if err != nil {
+				return err
+			}
+			_, err = core.UnlockVault(vaultName, password)
+			if err != nil {
+				return fmt.Errorf("unable to unlock vault %s: %w", vaultName, err)
+			}
+			if err := core.DeleteVault(vaultName); err != nil {
+				return fmt.Errorf("unable to delete vault %s: %w", vaultName, err)
+			}
+			fmt.Printf("vault %s deleted successfully", vaultName)
+			return nil
+		},
+	}
 	return cmd
 }
 
