@@ -31,6 +31,7 @@ func Init() {
 
 func Load() error {
 	configFile := checkConfigFile()
+	pruned := false
 
 	configData, err := os.ReadFile(configFile)
 	if err != nil {
@@ -47,11 +48,11 @@ func Load() error {
 	for k, v := range Config.Vaults {
 		if !store.CheckFileExists(v) {
 			delete(Config.Vaults, k)
+			pruned = true
 		}
 	}
-	err = Save()
-	if err != nil {
-		return err
+	if pruned {
+		return Save()
 	}
 	return nil
 }
