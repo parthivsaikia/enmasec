@@ -5,18 +5,18 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/parthivsaikia/enmasec/internal/model"
-	"github.com/parthivsaikia/enmasec/internal/utils"
+	"github.com/parthivsaikia/enmasec/internal/models"
+	"github.com/parthivsaikia/enmasec/internal/store"
 	"gopkg.in/yaml.v3"
 )
 
-var Config model.Config
+var Config models.Config
 
 func checkConfigFile() string {
 	files := []string{"config.yaml", "config.yml"}
 	var configFile string
 	for _, file := range files {
-		fullpath := filepath.Join(utils.GetEnmasecConfigDir(), file)
+		fullpath := filepath.Join(store.GetEnmasecConfigDirLocation(), file)
 		if _, err := os.Stat(fullpath); err == nil {
 			configFile = fullpath
 		}
@@ -31,6 +31,7 @@ func Init() {
 
 func Load() error {
 	configFile := checkConfigFile()
+	pruned := false
 
 	configData, err := os.ReadFile(configFile)
 	if err != nil {
@@ -45,27 +46,27 @@ func Load() error {
 		return err
 	}
 	for k, v := range Config.Vaults {
-		if !utils.CheckFileExists(v) {
+		if !store.CheckFileExists(v) {
 			delete(Config.Vaults, k)
+			pruned = true
 		}
 	}
-	err = Save()
-	if err != nil {
-		return err
+	if pruned {
+		return Save()
 	}
 	return nil
 }
 
 func Save() error {
 	configFile := checkConfigFile()
-	if !utils.CheckFileExists(utils.GetEnmasecConfigDir()) {
-		err := os.MkdirAll(utils.GetEnmasecConfigDir(), 0o777)
+	if !store.CheckFileExists(store.GetEnmasecConfigDirLocation()) {
+		err := os.MkdirAll(store.GetEnmasecConfigDirLocation(), 0o777)
 		if err != nil {
 			return fmt.Errorf("permission error: %w", err)
 		}
 	}
 	if configFile == "" {
-		configFile = filepath.Join(utils.GetEnmasecConfigDir(), "config.yaml")
+		configFile = filepath.Join(store.GetEnmasecConfigDirLocation(), "config.yaml")
 	}
 	configData, err := yaml.Marshal(Config)
 	if err != nil {

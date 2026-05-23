@@ -25,7 +25,6 @@ func EncryptAge(data []byte, masterKey string) ([]byte, error) {
 	if err != nil {
 		return nil, ErrCreateAgeRecipient(err)
 	}
-
 	out := &bytes.Buffer{}
 
 	writer, err := age.Encrypt(out, recipient)
