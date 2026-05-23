@@ -22,6 +22,7 @@ func NewCommand() *cobra.Command {
 		},
 	}
 	newCmd.AddCommand(newAddCmd())
+	newCmd.AddCommand(newListCmd())
 	return newCmd
 }
 
@@ -42,7 +43,7 @@ func newAddCmd() *cobra.Command {
 			serviceName := args[0]
 			vault, err := resolveVault(cmd)
 			if err != nil {
-				return err
+				return fmt.Errorf("unable to resolve vault: %w", err)
 			}
 
 			password, err := components.PasswordPrompt(fmt.Sprintf("enter master password for vault %s", vault))
@@ -63,6 +64,34 @@ func newAddCmd() *cobra.Command {
 	}
 	addCmd.Flags().String("vault", "", "vault where service needs to be added.")
 	return addCmd
+}
+
+func newListCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "list",
+		Short: "List all the services of the specified vault. Defaults to current vault if not specified",
+		Args:  cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vaultName, err := resolveVault(cmd)
+			if err != nil {
+				return err
+			}
+			password, err := components.PasswordPrompt(fmt.Sprintf("enter master password for vault %s", vaultName))
+			if err != nil {
+				return fmt.Errorf("unable to capture password %w", err)
+			}
+			key, err := core.UnlockVault(vaultName, password)
+			if err != nil {
+				return fmt.Errorf("unable to unlock vault %s: %w", vaultName, err)
+			}
+			if err := core.ListService(vaultName, string(key)); err != nil {
+				return err
+			}
+			return nil
+		},
+	}
+	cmd.Flags().String("vault", "", "vault where service needs to be added.")
+	return cmd
 }
 
 func resolveVault(cmd *cobra.Command) (string, error) {

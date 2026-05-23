@@ -90,3 +90,18 @@ func OpenVaultIndex(indexData []byte) (*models.VaultIndex, *models.RuntimeIndex,
 	r := BuildRuntimeIndex(&v)
 	return &v, r, nil
 }
+
+func ListService(vaultName, key string) error {
+	indexData, err := DecryptVaultIndex(vaultName, key)
+	if err != nil {
+		return err
+	}
+	vi, _, err := OpenVaultIndex(indexData)
+	if err != nil {
+		return err
+	}
+	for _, svc := range vi.Services {
+		fmt.Printf("%s\n", svc.Name)
+	}
+	return nil
+}
