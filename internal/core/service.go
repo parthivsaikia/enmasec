@@ -2,6 +2,7 @@ package core
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/parthivsaikia/enmasec/internal/config"
@@ -10,9 +11,22 @@ import (
 	"github.com/parthivsaikia/enmasec/internal/store"
 )
 
-func CreateService(vaultName, serviceName, key string, runtimeIndex *models.RuntimeIndex, vaultIndex *models.VaultIndex) error {
+func CreateService(vaultName, serviceName, key string) (*models.VaultIndex, *models.RuntimeIndex, error) {
 	vaultPath := config.Config.Vaults[vaultName]
 	id := uuid.New()
+
+	indexData, err := DecryptVaultIndex(vaultName, string(key))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	vaultIndex, runtimeIndex, err := OpenVaultIndex(indexData)
+	if err != nil {
+		return nil, nil, err
+	}
+	if _, ok := runtimeIndex.ServiceNameToID[serviceName]; ok {
+		return nil, nil, fmt.Errorf("service %s already exists", serviceName)
+	}
 
 	vaultIndex.Services[id] = &models.ServiceEntry{
 		Name:     serviceName,
@@ -26,12 +40,12 @@ func CreateService(vaultName, serviceName, key string, runtimeIndex *models.Runt
 
 	indexBytes, err := json.Marshal(vaultIndex)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	encryptedIndexMapData, err := encryption.EncryptAge(indexBytes, key)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 	err = store.CreateService(vaultPath, id.String(), encryptedIndexMapData)
 	if err != nil {
@@ -40,9 +54,9 @@ func CreateService(vaultName, serviceName, key string, runtimeIndex *models.Runt
 		delete(runtimeIndex.ServiceIDToName, id)
 		delete(runtimeIndex.AccountNameToID, id)
 		delete(runtimeIndex.AccountIDToName, id)
-		return err
+		return nil, nil, err
 	}
-	return nil
+	return vaultIndex, runtimeIndex, nil
 }
 
 func BuildRuntimeIndex(v *models.VaultIndex) *models.RuntimeIndex {

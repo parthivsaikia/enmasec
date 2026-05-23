@@ -54,21 +54,7 @@ func newAddCmd() *cobra.Command {
 				return fmt.Errorf("unable to unlock vault: %w", err)
 			}
 
-			indexData, err := core.DecryptVaultIndex(vault, string(key))
-			if err != nil {
-				return err
-			}
-
-			vi, rt, err := core.OpenVaultIndex(indexData)
-			if err != nil {
-				return err
-			}
-
-			if _, ok := rt.ServiceNameToID[serviceName]; ok {
-				return fmt.Errorf("service %s already exists", serviceName)
-			}
-
-			if err := core.CreateService(vault, serviceName, string(key), rt, vi); err != nil {
+			if _, _, err := core.CreateService(vault, serviceName, string(key)); err != nil {
 				return fmt.Errorf("unable to create service: %w", err)
 			}
 			fmt.Printf("created service %s successfully.", serviceName)
