@@ -6,13 +6,7 @@ import (
 	"io"
 
 	"filippo.io/age"
-	"golang.org/x/crypto/argon2"
 )
-
-func ArgonHash(password []byte, hash []byte) []byte {
-	key := argon2.IDKey(password, []byte(hash), 1, 64*1024, 4, 32)
-	return key
-}
 
 func RandomByte(l int) []byte {
 	b := make([]byte, l)
