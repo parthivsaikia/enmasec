@@ -161,3 +161,49 @@ func UpdateService(oldName, newName, key string) (*models.VaultIndex, *models.Ru
 	}
 	return vaultIndex, runtimeIndex, nil
 }
+
+func DeleteService(name, key string) (*models.VaultIndex, *models.RuntimeIndex, error) {
+	vaultName := config.Config.CurrentVault
+	vaultPath := config.Config.Vaults[vaultName]
+	indexFilePath := filepath.Join(vaultPath, "index.age")
+
+	indexData, err := DecryptVaultIndex(vaultName, string(key))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	vaultIndex, runtimeIndex, err := OpenVaultIndex(indexData)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if _, ok := runtimeIndex.ServiceNameToID[name]; !ok {
+		return nil, nil, fmt.Errorf("service %s doesn't exist", name)
+	}
+	serviceId := runtimeIndex.ServiceNameToID[name]
+	delete(vaultIndex.Services, serviceId)
+	delete(runtimeIndex.ServiceNameToID, name)
+	delete(runtimeIndex.ServiceIDToName, serviceId)
+
+	servicePath := filepath.Join(vaultPath, serviceId.String())
+
+	if err := store.DeleteFile(servicePath); err != nil {
+		return nil, nil, err
+	}
+
+	indexBytes, err := json.Marshal(vaultIndex)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	encryptedIndexMapData, err := encryption.EncryptAge(indexBytes, key)
+	if err != nil {
+		return nil, nil, err
+	}
+	err = store.WriteFile(encryptedIndexMapData, indexFilePath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return vaultIndex, runtimeIndex, nil
+}

@@ -24,6 +24,7 @@ func NewCommand() *cobra.Command {
 	newCmd.AddCommand(newAddCmd())
 	newCmd.AddCommand(newListCmd())
 	newCmd.AddCommand(newUpdateCommand())
+	newCmd.AddCommand(newDeleteCmd())
 	return newCmd
 }
 
@@ -146,6 +147,40 @@ func newUpdateCommand() *cobra.Command {
 		},
 	}
 	cmd.Flags().String("name", "", "new name of the service")
+	return cmd
+}
+
+func newDeleteCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "delete",
+		Short: "delete a service",
+		Args:  cobra.ExactArgs(1),
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			serviceName := args[0]
+			if err := validation.ValidateServiceName(serviceName); err != nil {
+				return err
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			serviceName := args[0]
+			currentVault := config.Config.CurrentVault
+			password, err := components.PasswordPrompt(fmt.Sprintf("enter master password for vault %s", currentVault))
+			if err != nil {
+				return err
+			}
+			key, err := core.UnlockVault(currentVault, password)
+			if err != nil {
+				return fmt.Errorf("unable to unlock vault %s: %w", currentVault, err)
+			}
+
+			if _, _, err := core.DeleteService(serviceName, string(key)); err != nil {
+				return err
+			}
+
+			return nil
+		},
+	}
 	return cmd
 }
 
