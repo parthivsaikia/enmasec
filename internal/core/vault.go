@@ -195,14 +195,14 @@ func RepairVaultIndex(vaultName, key string) (*models.VaultIndex, *models.Runtim
 }
 
 func DeleteVault(vaultName string) error {
+	if vaultName == config.Config.CurrentVault {
+		return fmt.Errorf("%s is current vault. Checkout to another vault first", vaultName)
+	}
 	vaultPath := config.Config.Vaults[vaultName]
 	if err := store.DeleteFile(vaultPath); err != nil {
 		return err
 	}
 	delete(config.Config.Vaults, vaultName)
-	if config.Config.CurrentVault == vaultName {
-		config.Config.CurrentVault = ""
-	}
 	if err := config.Save(); err != nil {
 		return fmt.Errorf("unable to save config: %w", err)
 	}

@@ -27,6 +27,10 @@ func ValidateVaultLocationFromConfig(vaultName string) bool {
 	return store.CheckFileExists(vaultLocation)
 }
 
+func IsVaultCurrentVault(vaultName string) bool {
+	return vaultName == config.Config.CurrentVault
+}
+
 func CheckPasswordValid(password string) bool {
 	if len(password) < 8 {
 		return false

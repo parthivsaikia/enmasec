@@ -246,6 +246,9 @@ func newDeleteCommand() *cobra.Command {
 			if !validation.ValidateVaultLocationFromConfig(vaultName) {
 				return fmt.Errorf("vault %s doesn't exist", vaultName)
 			}
+			if validation.IsVaultCurrentVault(vaultName) {
+				return fmt.Errorf("%s is current vault. Checkout to another vault first", vaultName)
+			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
