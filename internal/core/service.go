@@ -3,6 +3,7 @@ package core
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 
 	"github.com/google/uuid"
 	"github.com/parthivsaikia/enmasec/internal/config"
@@ -104,4 +105,59 @@ func ListService(vaultName, key string) error {
 		fmt.Printf("%s\n", svc.Name)
 	}
 	return nil
+}
+
+func UpdateService(oldName, newName, key string) (*models.VaultIndex, *models.RuntimeIndex, error) {
+	vaultName := config.Config.CurrentVault
+	vaultPath := config.Config.Vaults[vaultName]
+	indexFilePath := filepath.Join(vaultPath, "index.age")
+	id := uuid.New()
+
+	indexData, err := DecryptVaultIndex(vaultName, string(key))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	vaultIndex, runtimeIndex, err := OpenVaultIndex(indexData)
+	if err != nil {
+		return nil, nil, err
+	}
+	if _, ok := runtimeIndex.ServiceNameToID[newName]; ok {
+		return nil, nil, fmt.Errorf("service %s already exists", newName)
+	}
+	oldServiceId := runtimeIndex.ServiceNameToID[oldName]
+	servicePath := filepath.Join(vaultPath, oldServiceId.String())
+	newPath := filepath.Join(vaultPath, id.String())
+
+	accounts := vaultIndex.Services[oldServiceId].Accounts
+	vaultIndex.Services[id] = &models.ServiceEntry{
+		Name:     newName,
+		Accounts: make(map[uuid.UUID]*models.AccountEntry),
+	}
+	if accounts != nil {
+		fmt.Println(accounts)
+		fmt.Println(vaultIndex.Services[id])
+		vaultIndex.Services[id].Accounts = accounts
+	}
+	delete(vaultIndex.Services, oldServiceId)
+	runtimeIndex.ServiceNameToID[newName] = id
+	runtimeIndex.ServiceIDToName[id] = newName
+	if err := store.RenameFile(servicePath, newPath); err != nil {
+		return nil, nil, fmt.Errorf("unable to rename service: %w", err)
+	}
+
+	indexBytes, err := json.Marshal(vaultIndex)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	encryptedIndexMapData, err := encryption.EncryptAge(indexBytes, key)
+	if err != nil {
+		return nil, nil, err
+	}
+	err = store.WriteFile(encryptedIndexMapData, indexFilePath)
+	if err != nil {
+		return nil, nil, err
+	}
+	return vaultIndex, runtimeIndex, nil
 }
