@@ -16,7 +16,7 @@ func CreateService(vaultName, serviceName, key string) (*models.VaultIndex, *mod
 	vaultPath := config.Config.Vaults[vaultName]
 	id := uuid.New()
 
-	indexData, err := DecryptVaultIndex(vaultName, string(key))
+	indexData, err := DecryptVaultIndex(vaultName, key)
 	if err != nil {
 		return nil, nil, err
 	}
