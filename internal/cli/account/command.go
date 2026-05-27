@@ -23,6 +23,7 @@ func NewCommand() *cobra.Command {
 		},
 	}
 	cmd.AddCommand(newAddCommand())
+	cmd.AddCommand(newListCommand())
 	return cmd
 }
 
@@ -61,6 +62,39 @@ func newAddCommand() *cobra.Command {
 				return err
 			}
 
+			return nil
+		},
+	}
+	return cmd
+}
+
+func newListCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "list [service]",
+		Short: "list all accounts of a service",
+		Args:  cobra.ExactArgs(1),
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			serviceName := args[0]
+			if err := validation.ValidateServiceName(serviceName); err != nil {
+				return fmt.Errorf("validation error : %w", err)
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			serviceName := args[0]
+			currentVault := config.Config.CurrentVault
+			password, err := components.PasswordPrompt(fmt.Sprintf("enter master password for vault %s: ", currentVault))
+			if err != nil {
+				return err
+			}
+			key, err := core.UnlockVault(currentVault, password)
+			if err != nil {
+				return fmt.Errorf("unable to unlock vault %s: %w", currentVault, err)
+			}
+			_, _, err = core.ListAccounts(currentVault, serviceName, string(key))
+			if err != nil {
+				return err
+			}
 			return nil
 		},
 	}
