@@ -57,6 +57,10 @@ func newAddCommand() *cobra.Command {
 				return fmt.Errorf("unable to unlock vault %s: %w", currentVault, err)
 			}
 
+			if _, _, err := core.CreateAccount(currentVault, serviceName, accountName, string(key)); err != nil {
+				return err
+			}
+
 			return nil
 		},
 	}

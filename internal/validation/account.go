@@ -11,3 +11,10 @@ func ValidateAccountName(name string) error {
 	}
 	return nil
 }
+
+func ValidateAccountMetaDataKey(key string) error {
+	if key == "" {
+		return fmt.Errorf("key or value can't be empty")
+	}
+	return nil
+}
