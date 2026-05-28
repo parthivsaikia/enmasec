@@ -56,6 +56,22 @@ func CreateAccount(vaultName, serviceName, accountName, key string) (*models.Vau
 	runtimeIndex.AccountIDToName[serviceId][accountId] = accountName
 	runtimeIndex.AccountNameToID[serviceId][accountName] = accountId
 
+	// TODO: refactor to one function
+	indexBytes, err := json.Marshal(vaultIndex)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	encryptedIndexMapData, err := encryption.EncryptAge(indexBytes, key)
+	if err != nil {
+		return nil, nil, err
+	}
+	indexFilePath := filepath.Join(vaultPath, "index.age")
+	err = store.WriteFile(encryptedIndexMapData, indexFilePath)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	if err := store.CreateAccount(accoutFilePath, encryptedAccountData); err != nil {
 		return nil, nil, err
 	}
