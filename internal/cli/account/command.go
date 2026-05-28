@@ -3,6 +3,7 @@ package account
 import (
 	"fmt"
 
+	"github.com/atotto/clipboard"
 	"github.com/parthivsaikia/enmasec/internal/cli/components"
 	"github.com/parthivsaikia/enmasec/internal/config"
 	"github.com/parthivsaikia/enmasec/internal/core"
@@ -141,9 +142,21 @@ func newGetCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println(accountPassword)
+			copy, err := cmd.Flags().GetBool("copy")
+			if err != nil {
+				return err
+			}
+			if copy {
+				err := clipboard.WriteAll(accountPassword)
+				if err != nil {
+					return err
+				}
+			} else {
+				fmt.Println(accountPassword)
+			}
 			return nil
 		},
 	}
+	cmd.Flags().Bool("copy", false, "copy password to clipboard")
 	return cmd
 }
