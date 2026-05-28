@@ -24,6 +24,7 @@ func NewCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newAddCommand())
 	cmd.AddCommand(newListCommand())
+	cmd.AddCommand(newGetCommand())
 	return cmd
 }
 
@@ -140,6 +141,7 @@ func newGetCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			fmt.Println(accountPassword)
 			return nil
 		},
 	}
