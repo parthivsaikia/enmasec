@@ -62,3 +62,23 @@ func CreateAccount(vaultName, serviceName, accountName, key string) (*models.Vau
 
 	return vaultIndex, runtimeIndex, nil
 }
+
+func ListAccounts(vaultName, serviceName, key string) (*models.VaultIndex, *models.RuntimeIndex, error) {
+	indexData, err := DecryptVaultIndex(vaultName, key)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	vaultIndex, runtimeIndex, err := OpenVaultIndex(indexData)
+	if err != nil {
+		return nil, nil, err
+	}
+	if _, ok := runtimeIndex.ServiceNameToID[serviceName]; !ok {
+		return nil, nil, fmt.Errorf("service %s doesn't exist", serviceName)
+	}
+	serviceId := runtimeIndex.ServiceNameToID[serviceName]
+	for accountName := range runtimeIndex.AccountNameToID[serviceId] {
+		fmt.Println(accountName)
+	}
+	return vaultIndex, runtimeIndex, nil
+}
