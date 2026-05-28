@@ -82,3 +82,39 @@ func ListAccounts(vaultName, serviceName, key string) (*models.VaultIndex, *mode
 	}
 	return vaultIndex, runtimeIndex, nil
 }
+
+func GetAccount(vaultName, serviceName, accountName, key string) (string, error) {
+	indexData, err := DecryptVaultIndex(vaultName, key)
+	if err != nil {
+		return "", err
+	}
+
+	_, runtimeIndex, err := OpenVaultIndex(indexData)
+	if err != nil {
+		return "", err
+	}
+	serviceId, ok := runtimeIndex.ServiceNameToID[serviceName]
+	if !ok {
+		return "", fmt.Errorf("service doesn't exist %s", serviceName)
+	}
+	accountId, ok := runtimeIndex.AccountNameToID[serviceId][accountName]
+	if !ok {
+		return "", fmt.Errorf("account doesn't exist %s", accountName)
+	}
+	vaultPath := config.Config.Vaults[vaultName]
+	accountPath := filepath.Join(vaultPath, serviceId.String(), accountId.String()+".age")
+	accountData, err := store.ReadFile(accountPath)
+	if err != nil {
+		return "", err
+	}
+	decryptedAccountData, err := encryption.DecryptAge(key, accountData)
+	if err != nil {
+		return "", err
+	}
+	var account models.Account
+	err = toml.Unmarshal(decryptedAccountData, &account)
+	if err != nil {
+		return "", err
+	}
+	return account.Password, nil
+}
