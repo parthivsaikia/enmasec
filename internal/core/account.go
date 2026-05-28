@@ -1,6 +1,7 @@
 package core
 
 import (
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"time"
@@ -42,12 +43,16 @@ func CreateAccount(vaultName, serviceName, accountName, key string) (*models.Vau
 		return nil, nil, err
 	}
 
-	if _, ok := runtimeIndex.ServiceNameToID[serviceName]; !ok {
+	serviceId, ok := runtimeIndex.ServiceNameToID[serviceName]
+	if !ok {
 		return nil, nil, fmt.Errorf("service %s doesn't exist", serviceName)
 	}
 
-	serviceId := runtimeIndex.ServiceNameToID[serviceName]
 	accountId := uuid.New()
+
+	if _, ok := runtimeIndex.AccountIDToName[serviceId][accountId]; ok {
+		return nil, nil, fmt.Errorf("account %s already exists", accountName)
+	}
 	vaultPath := config.Config.Vaults[vaultName]
 	accoutFilePath := filepath.Join(vaultPath, serviceId.String(), fmt.Sprintf("%s.age", accountId.String()))
 	vaultIndex.Services[serviceId].Accounts[accountId] = &models.AccountEntry{
