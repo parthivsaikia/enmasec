@@ -196,7 +196,7 @@ func newUpdateCommand() *cobra.Command {
 			serviceName := args[0]
 			accountName := args[1]
 			currentVault := config.Config.CurrentVault
-			password, err := components.PasswordPrompt(fmt.Sprint("enter master password for vault %s: ", currentVault))
+			password, err := components.PasswordPrompt(fmt.Sprintf("enter master password for vault %s: ", currentVault))
 			if err != nil {
 				return err
 			}
