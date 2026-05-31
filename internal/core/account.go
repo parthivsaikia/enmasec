@@ -9,6 +9,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/google/uuid"
 	"github.com/parthivsaikia/enmasec/internal/cli/components"
+	"github.com/parthivsaikia/enmasec/internal/clipboard"
 	"github.com/parthivsaikia/enmasec/internal/config"
 	"github.com/parthivsaikia/enmasec/internal/encryption"
 	"github.com/parthivsaikia/enmasec/internal/models"
@@ -97,10 +98,7 @@ func ListAccounts(vaultName, serviceName, key string) (*models.VaultIndex, *mode
 	if _, ok := runtimeIndex.ServiceNameToID[serviceName]; !ok {
 		return nil, nil, fmt.Errorf("service %s doesn't exist", serviceName)
 	}
-	serviceId := runtimeIndex.ServiceNameToID[serviceName]
-	for accountName := range runtimeIndex.AccountNameToID[serviceId] {
-		fmt.Println(accountName)
-	}
+
 	return vaultIndex, runtimeIndex, nil
 }
 
@@ -137,5 +135,10 @@ func GetAccount(vaultName, serviceName, accountName, key string) (string, error)
 	if err != nil {
 		return "", err
 	}
+
+	if err := clipboard.SpawnBackground(account.Password); err != nil {
+		return "", err
+	}
+
 	return account.Password, nil
 }
