@@ -29,6 +29,7 @@ func NewCommand() *cobra.Command {
 	cmd.AddCommand(newListCommand())
 	cmd.AddCommand(newGetCommand())
 	cmd.AddCommand(newUpdateCommand())
+	cmd.AddCommand(NewDeleteCommand())
 	return cmd
 }
 
@@ -216,6 +217,46 @@ func newUpdateCommand() *cobra.Command {
 				return err
 			}
 
+			return nil
+		},
+	}
+	return cmd
+}
+
+func NewDeleteCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "delete [service] [account]",
+		Short: "delete an account",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			serviceName := args[0]
+			if err := validation.ValidateServiceName(serviceName); err != nil {
+				return fmt.Errorf("validation error : %w", err)
+			}
+
+			accountName := args[1]
+			if accountName != "" {
+				if err := validation.ValidateAccountName(accountName); err != nil {
+					return fmt.Errorf("validation error : %w", err)
+				}
+			}
+
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			currentVault := config.Config.CurrentVault
+			serviceName := args[0]
+			accountName := args[1]
+			password, err := components.PasswordPrompt(fmt.Sprintf("enter master password for vault %s: ", currentVault))
+			if err != nil {
+				return err
+			}
+			key, err := core.UnlockVault(currentVault, password)
+			if err != nil {
+				return fmt.Errorf("unable to unlock vault %v: %w", currentVault, err)
+			}
+			if err := core.DeleteAccount(currentVault, serviceName, accountName, string(key)); err != nil {
+				return err
+			}
 			return nil
 		},
 	}
