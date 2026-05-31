@@ -65,6 +65,7 @@ func AccountCreationREPL(account *models.Account) error {
 			huh.NewInput().
 				Title("Enter your password").
 				Value(&(account.Password)),
+			// TODO: Hide or mask password
 			huh.NewConfirm().
 				Title("Do you have more fields to enter").
 				Value(&more),
