@@ -169,3 +169,52 @@ func newGetCommand() *cobra.Command {
 	cmd.Flags().Bool("copy", false, "copy password to clipboard")
 	return cmd
 }
+
+func newUpdateCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update [service] [account]",
+		Short: "update details of an account",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			serviceName := args[0]
+			if err := validation.ValidateServiceName(serviceName); err != nil {
+				return fmt.Errorf("validation error : %w", err)
+			}
+
+			accountName := args[1]
+			if accountName != "" {
+				if err := validation.ValidateAccountName(accountName); err != nil {
+					return fmt.Errorf("validation error : %w", err)
+				}
+			}
+
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			serviceName := args[0]
+			accountName := args[1]
+			currentVault := config.Config.CurrentVault
+			password, err := components.PasswordPrompt(fmt.Sprint("enter master password for vault %s: ", currentVault))
+			if err != nil {
+				return err
+			}
+			key, err := core.UnlockVault(currentVault, password)
+			if err != nil {
+				return fmt.Errorf("unable to unlock vault %s: %w", currentVault, err)
+			}
+			account, err := core.ViewAccount(currentVault, serviceName, accountName, string(key))
+			if err != nil {
+				return err
+			}
+			if err := components.AccountUpdateREPL(account); err != nil {
+				return err
+			}
+
+			if err := core.UpdateAccount(currentVault, serviceName, accountName, string(key), account); err != nil {
+				return err
+			}
+
+			return nil
+		},
+	}
+	return cmd
+}
