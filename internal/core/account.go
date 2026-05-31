@@ -142,3 +142,39 @@ func GetAccount(vaultName, serviceName, accountName, key string) (string, error)
 
 	return account.Password, nil
 }
+func ViewAccount(vaultName, serviceName, accountName, key string) (*models.Account, error) {
+	indexData, err := DecryptVaultIndex(vaultName, key)
+	if err != nil {
+		return nil, err
+	}
+
+	_, runtimeIndex, err := OpenVaultIndex(indexData)
+	if err != nil {
+		return nil, err
+	}
+	serviceId, ok := runtimeIndex.ServiceNameToID[serviceName]
+	if !ok {
+		return nil, fmt.Errorf("service doesn't exist %s", serviceName)
+	}
+	accountId, ok := runtimeIndex.AccountNameToID[serviceId][accountName]
+	if !ok {
+		return nil, fmt.Errorf("account doesn't exist %s", accountName)
+	}
+	vaultPath := config.Config.Vaults[vaultName]
+	accountPath := filepath.Join(vaultPath, serviceId.String(), accountId.String()+".age")
+	accountData, err := store.ReadFile(accountPath)
+	if err != nil {
+		return nil, err
+	}
+	decryptedAccountData, err := encryption.DecryptAge(key, accountData)
+	if err != nil {
+		return nil, err
+	}
+	var account models.Account
+	err = toml.Unmarshal(decryptedAccountData, &account)
+	if err != nil {
+		return nil, err
+	}
+	return &account, nil
+}
+
