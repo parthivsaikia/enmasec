@@ -178,3 +178,55 @@ func ViewAccount(vaultName, serviceName, accountName, key string) (*models.Accou
 	return &account, nil
 }
 
+func UpdateAccount(vaultName, serviceName, accountName, key string, newAccount *models.Account) error {
+	indexData, err := DecryptVaultIndex(vaultName, key)
+	if err != nil {
+		return err
+	}
+
+	vaultIndex, runtimeIndex, err := OpenVaultIndex(indexData)
+	if err != nil {
+		return err
+	}
+	serviceId, ok := runtimeIndex.ServiceNameToID[serviceName]
+	if !ok {
+		return fmt.Errorf("service doesn't exist %s", serviceName)
+	}
+	accountId, ok := runtimeIndex.AccountNameToID[serviceId][accountName]
+	if !ok {
+		return fmt.Errorf("account doesn't exist %s", accountName)
+	}
+	vaultPath := config.Config.Vaults[vaultName]
+	accountPath := filepath.Join(vaultPath, serviceId.String(), accountId.String()+".age")
+	vaultIndex.Services[serviceId].Accounts[accountId] = &models.AccountEntry{
+		Name: newAccount.Username,
+	}
+	runtimeIndex.AccountIDToName[serviceId][accountId] = newAccount.Username
+	runtimeIndex.AccountNameToID[serviceId][newAccount.Username] = accountId
+	indexBytes, err := json.Marshal(vaultIndex)
+	if err != nil {
+		return err
+	}
+
+	encryptedIndexMapData, err := encryption.EncryptAge(indexBytes, key)
+	if err != nil {
+		return err
+	}
+	indexFilePath := filepath.Join(vaultPath, "index.age")
+	err = store.WriteFile(encryptedIndexMapData, indexFilePath)
+	if err != nil {
+		return err
+	}
+	accountBytes, err := toml.Marshal(newAccount)
+	if err != nil {
+		return err
+	}
+	encryptedAccountData, err := encryption.EncryptAge(accountBytes, key)
+	if err != nil {
+		return err
+	}
+	if err := store.WriteFile(encryptedAccountData, accountPath); err != nil {
+		return err
+	}
+	return nil
+}
