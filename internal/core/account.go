@@ -4,11 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
-	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/google/uuid"
-	"github.com/parthivsaikia/enmasec/internal/cli/components"
 	"github.com/parthivsaikia/enmasec/internal/clipboard"
 	"github.com/parthivsaikia/enmasec/internal/config"
 	"github.com/parthivsaikia/enmasec/internal/encryption"
