@@ -221,3 +221,46 @@ func UpdateAccount(vaultName, serviceName, accountName, key string, newAccount *
 	}
 	return nil
 }
+
+func DeleteAccount(vaultName, serviceName, accountName, key string) error {
+	indexData, err := DecryptVaultIndex(vaultName, key)
+	if err != nil {
+		return err
+	}
+
+	vaultIndex, runtimeIndex, err := OpenVaultIndex(indexData)
+	if err != nil {
+		return err
+	}
+	serviceId, ok := runtimeIndex.ServiceNameToID[serviceName]
+	if !ok {
+		return fmt.Errorf("service doesn't exist %s", serviceName)
+	}
+	accountId, ok := runtimeIndex.AccountNameToID[serviceId][accountName]
+	if !ok {
+		return fmt.Errorf("account doesn't exist %s", accountName)
+	}
+	delete(vaultIndex.Services[serviceId].Accounts, accountId)
+	delete(runtimeIndex.AccountIDToName[serviceId], accountId)
+	delete(runtimeIndex.AccountNameToID[serviceId], accountName)
+	vaultPath := config.Config.Vaults[vaultName]
+	accountPath := filepath.Join(vaultPath, serviceId.String(), accountId.String()+".age")
+	indexBytes, err := json.Marshal(vaultIndex)
+	if err != nil {
+		return err
+	}
+
+	encryptedIndexMapData, err := encryption.EncryptAge(indexBytes, key)
+	if err != nil {
+		return err
+	}
+	indexFilePath := filepath.Join(vaultPath, "index.age")
+	err = store.WriteFile(encryptedIndexMapData, indexFilePath)
+	if err != nil {
+		return err
+	}
+	if err := store.DeleteFile(accountPath); err != nil {
+		return err
+	}
+	return nil
+}
