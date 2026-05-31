@@ -97,3 +97,70 @@ func AccountCreationREPL(account *models.Account) error {
 	}
 	return nil
 }
+
+func AccountUpdateREPL(account *models.Account) error {
+	coreForm := huh.NewForm(
+		huh.NewGroup(
+			huh.NewInput().
+				Title("Enter your username").
+				Validate(validation.ValidateAccountName).
+				Value(&(account.Username)),
+			huh.NewInput().
+				Title("Enter your password").
+				Value(&(account.Password)),
+			// TODO: Hide or mask password
+		),
+	)
+	if err := coreForm.Run(); err != nil {
+		return err
+	}
+
+	for key, value := range account.Metadata {
+		fmt.Println(value)
+		keyValForm := huh.NewForm(
+			huh.NewGroup(
+				huh.NewInput().
+					Title(key).
+					Value(&value),
+			),
+		)
+		if err := keyValForm.Run(); err != nil {
+			return err
+		}
+		account.Metadata[key] = value
+	}
+	more := false
+	moreForm := huh.NewForm(
+		huh.NewGroup(
+			huh.NewConfirm().
+				Title("Do you have more fields to enter").
+				Value(&more),
+		),
+	)
+	if err := moreForm.Run(); err != nil {
+		return err
+	}
+	for more {
+		var key, val string
+		metaDataForm := huh.NewForm(
+			huh.NewGroup(
+				huh.NewInput().
+					Title("Enter key").
+					Validate(validation.ValidateAccountMetaDataKey).
+					Value(&key),
+				huh.NewInput().
+					Title("Enter value").
+					Validate(validation.ValidateAccountMetaDataKey).
+					Value(&val),
+				huh.NewConfirm().
+					Title("Do you have more fields to enter").
+					Value(&more),
+			),
+		)
+		if err := metaDataForm.Run(); err != nil {
+			return err
+		}
+		account.Metadata[key] = val
+	}
+	return nil
+}
