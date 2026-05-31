@@ -69,7 +69,7 @@ func newAddCommand() *cobra.Command {
 				return err
 			}
 
-			if _, _, err := core.CreateAccount(currentVault, serviceName, accountName, string(key)); err != nil {
+			if _, _, err := core.CreateAccount(currentVault, serviceName, accountName, string(key), &account); err != nil {
 				return err
 			}
 
