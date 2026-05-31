@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/parthivsaikia/enmasec/internal/cli/account"
 	"github.com/parthivsaikia/enmasec/internal/cli/service"
 	"github.com/parthivsaikia/enmasec/internal/cli/vault"
+	"github.com/parthivsaikia/enmasec/internal/clipboard"
 	"github.com/parthivsaikia/enmasec/internal/config"
 	"github.com/parthivsaikia/enmasec/internal/utils"
 	"github.com/spf13/cobra"
@@ -28,6 +30,8 @@ func Execute() {
 func init() {
 	rootCmd.AddCommand(vault.NewCommand())
 	rootCmd.AddCommand(service.NewCommand())
+	rootCmd.AddCommand(account.NewCommand())
+	rootCmd.AddCommand(clipboard.ClearPasswordCmd())
 	logger := utils.Logger(os.Stdout)
 	config.Init()
 	if err := config.Load(); err != nil {

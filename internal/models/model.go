@@ -5,10 +5,10 @@ import (
 )
 
 type Account struct {
-	Username  string
-	Password  string
-	Metadata  map[string]string
-	UpdatedAt string
+	Username  string            `toml:"username"`
+	Password  string            `toml:"password"`
+	Metadata  map[string]string `toml:"metadata"`
+	UpdatedAt string            `toml:"updated_at"`
 }
 
 type Config struct {

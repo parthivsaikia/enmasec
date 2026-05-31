@@ -5,8 +5,11 @@ import (
 	"strings"
 	"syscall"
 
+	"charm.land/huh/v2"
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/table"
+	"github.com/parthivsaikia/enmasec/internal/models"
+	"github.com/parthivsaikia/enmasec/internal/validation"
 	"golang.org/x/term"
 )
 
@@ -47,6 +50,118 @@ func VaultTable(currentVaultRow int, rows [][]string) error {
 		Rows(rows...)
 	if _, err := lipgloss.Println(t); err != nil {
 		return err
+	}
+	return nil
+}
+
+func AccountCreationREPL(account *models.Account) error {
+	var more bool
+	coreForm := huh.NewForm(
+		huh.NewGroup(
+			huh.NewInput().
+				Title("Enter your username").
+				Validate(validation.ValidateAccountName).
+				Value(&(account.Username)),
+			huh.NewInput().
+				Title("Enter your password").
+				Value(&(account.Password)),
+			// TODO: Hide or mask password
+			huh.NewConfirm().
+				Title("Do you have more fields to enter").
+				Value(&more),
+		),
+	)
+	if err := coreForm.Run(); err != nil {
+		return err
+	}
+	for more {
+		var key, val string
+		metaDataForm := huh.NewForm(
+			huh.NewGroup(
+				huh.NewInput().
+					Title("Enter key").
+					Validate(validation.ValidateAccountMetaDataKey).
+					Value(&key),
+				huh.NewInput().
+					Title("Enter value").
+					Validate(validation.ValidateAccountMetaDataKey).
+					Value(&val),
+				huh.NewConfirm().
+					Title("Do you have more fields to enter").
+					Value(&more),
+			),
+		)
+		if err := metaDataForm.Run(); err != nil {
+			return err
+		}
+		account.Metadata[key] = val
+	}
+	return nil
+}
+
+func AccountUpdateREPL(account *models.Account) error {
+	coreForm := huh.NewForm(
+		huh.NewGroup(
+			huh.NewInput().
+				Title("Enter your username").
+				Validate(validation.ValidateAccountName).
+				Value(&(account.Username)),
+			huh.NewInput().
+				Title("Enter your password").
+				Value(&(account.Password)),
+			// TODO: Hide or mask password
+		),
+	)
+	if err := coreForm.Run(); err != nil {
+		return err
+	}
+
+	for key, value := range account.Metadata {
+		fmt.Println(value)
+		keyValForm := huh.NewForm(
+			huh.NewGroup(
+				huh.NewInput().
+					Title(key).
+					Value(&value),
+			),
+		)
+		if err := keyValForm.Run(); err != nil {
+			return err
+		}
+		account.Metadata[key] = value
+	}
+	more := false
+	moreForm := huh.NewForm(
+		huh.NewGroup(
+			huh.NewConfirm().
+				Title("Do you have more fields to enter").
+				Value(&more),
+		),
+	)
+	if err := moreForm.Run(); err != nil {
+		return err
+	}
+	for more {
+		var key, val string
+		metaDataForm := huh.NewForm(
+			huh.NewGroup(
+				huh.NewInput().
+					Title("Enter key").
+					Validate(validation.ValidateAccountMetaDataKey).
+					Value(&key),
+				huh.NewInput().
+					Title("Enter value").
+					Validate(validation.ValidateAccountMetaDataKey).
+					Value(&val),
+				huh.NewConfirm().
+					Title("Do you have more fields to enter").
+					Value(&more),
+			),
+		)
+		if err := metaDataForm.Run(); err != nil {
+			return err
+		}
+		account.Metadata[key] = val
 	}
 	return nil
 }
