@@ -59,6 +59,15 @@ func newAddCommand() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("unable to unlock vault %s: %w", currentVault, err)
 			}
+			account := models.Account{
+				Username:  accountName,
+				Password:  "",
+				Metadata:  map[string]string{},
+				UpdatedAt: time.Now().String(),
+			}
+			if err := components.AccountCreationREPL(&account); err != nil {
+				return err
+			}
 
 			if _, _, err := core.CreateAccount(currentVault, serviceName, accountName, string(key)); err != nil {
 				return err
