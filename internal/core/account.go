@@ -16,16 +16,7 @@ import (
 	"github.com/parthivsaikia/enmasec/internal/store"
 )
 
-func CreateAccount(vaultName, serviceName, accountName, key string) (*models.VaultIndex, *models.RuntimeIndex, error) {
-	account := models.Account{
-		Username:  accountName,
-		Password:  "",
-		Metadata:  map[string]string{},
-		UpdatedAt: time.Now().String(),
-	}
-	if err := components.AccountCreationREPL(&account); err != nil {
-		return nil, nil, err
-	}
+func CreateAccount(vaultName, serviceName, accountName, key string, account *models.Account) (*models.VaultIndex, *models.RuntimeIndex, error) {
 	accountData, err := toml.Marshal(account)
 	if err != nil {
 		return nil, nil, err
@@ -142,6 +133,7 @@ func GetAccount(vaultName, serviceName, accountName, key string) (string, error)
 
 	return account.Password, nil
 }
+
 func ViewAccount(vaultName, serviceName, accountName, key string) (*models.Account, error) {
 	indexData, err := DecryptVaultIndex(vaultName, key)
 	if err != nil {
