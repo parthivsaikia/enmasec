@@ -193,6 +193,7 @@ func UpdateAccount(vaultName, serviceName, accountName, key string, newAccount *
 	}
 	runtimeIndex.AccountIDToName[serviceId][accountId] = newAccount.Username
 	runtimeIndex.AccountNameToID[serviceId][newAccount.Username] = accountId
+	delete(runtimeIndex.AccountNameToID[serviceId], accountName)
 	indexBytes, err := json.Marshal(vaultIndex)
 	if err != nil {
 		return err
