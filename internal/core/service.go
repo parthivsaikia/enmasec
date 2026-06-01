@@ -16,12 +16,7 @@ func CreateService(vaultName, serviceName, key string) (*models.VaultIndex, *mod
 	vaultPath := config.Config.Vaults[vaultName]
 	id := uuid.New()
 
-	indexData, err := DecryptVaultIndex(vaultName, key)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	vaultIndex, runtimeIndex, err := OpenVaultIndex(indexData)
+	vaultIndex, runtimeIndex, err := GetVaultIndexAndRunTime(vaultName, key)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -92,12 +87,21 @@ func OpenVaultIndex(indexData []byte) (*models.VaultIndex, *models.RuntimeIndex,
 	return &v, r, nil
 }
 
-func ListService(vaultName, key string) error {
+func GetVaultIndexAndRunTime(vaultName, key string) (*models.VaultIndex, *models.RuntimeIndex, error) {
 	indexData, err := DecryptVaultIndex(vaultName, key)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
-	vi, _, err := OpenVaultIndex(indexData)
+
+	vaultIndex, runtimeIndex, err := OpenVaultIndex(indexData)
+	if err != nil {
+		return nil, nil, err
+	}
+	return vaultIndex, runtimeIndex, err
+}
+
+func ListService(vaultName, key string) error {
+	vi, _, err := GetVaultIndexAndRunTime(vaultName, key)
 	if err != nil {
 		return err
 	}
@@ -113,12 +117,7 @@ func UpdateService(oldName, newName, key string) (*models.VaultIndex, *models.Ru
 	indexFilePath := filepath.Join(vaultPath, "index.age")
 	id := uuid.New()
 
-	indexData, err := DecryptVaultIndex(vaultName, string(key))
-	if err != nil {
-		return nil, nil, err
-	}
-
-	vaultIndex, runtimeIndex, err := OpenVaultIndex(indexData)
+	vaultIndex, runtimeIndex, err := GetVaultIndexAndRunTime(vaultName, key)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -146,17 +145,7 @@ func UpdateService(oldName, newName, key string) (*models.VaultIndex, *models.Ru
 		return nil, nil, fmt.Errorf("unable to rename service: %w", err)
 	}
 
-	indexBytes, err := json.Marshal(vaultIndex)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	encryptedIndexMapData, err := encryption.EncryptAge(indexBytes, key)
-	if err != nil {
-		return nil, nil, err
-	}
-	err = store.WriteFile(encryptedIndexMapData, indexFilePath)
-	if err != nil {
+	if err := WriteToIndexFile(vaultIndex, key, indexFilePath); err != nil {
 		return nil, nil, err
 	}
 	return vaultIndex, runtimeIndex, nil
@@ -167,12 +156,7 @@ func DeleteService(name, key string) (*models.VaultIndex, *models.RuntimeIndex, 
 	vaultPath := config.Config.Vaults[vaultName]
 	indexFilePath := filepath.Join(vaultPath, "index.age")
 
-	indexData, err := DecryptVaultIndex(vaultName, string(key))
-	if err != nil {
-		return nil, nil, err
-	}
-
-	vaultIndex, runtimeIndex, err := OpenVaultIndex(indexData)
+	vaultIndex, runtimeIndex, err := GetVaultIndexAndRunTime(vaultName, key)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -187,21 +171,10 @@ func DeleteService(name, key string) (*models.VaultIndex, *models.RuntimeIndex, 
 
 	servicePath := filepath.Join(vaultPath, serviceId.String())
 
+	if err := WriteToIndexFile(vaultIndex, key, indexFilePath); err != nil {
+		return nil, nil, err
+	}
 	if err := store.DeleteFile(servicePath); err != nil {
-		return nil, nil, err
-	}
-
-	indexBytes, err := json.Marshal(vaultIndex)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	encryptedIndexMapData, err := encryption.EncryptAge(indexBytes, key)
-	if err != nil {
-		return nil, nil, err
-	}
-	err = store.WriteFile(encryptedIndexMapData, indexFilePath)
-	if err != nil {
 		return nil, nil, err
 	}
 
