@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	"github.com/google/uuid"
-	"github.com/parthivsaikia/enmasec/internal/cli/components"
 	"github.com/parthivsaikia/enmasec/internal/config"
 	"github.com/parthivsaikia/enmasec/internal/encryption"
 	"github.com/parthivsaikia/enmasec/internal/models"
@@ -69,19 +68,15 @@ func CheckoutVault(vaultName string) error {
 	return nil
 }
 
-func ListVaults() error {
-	var rows [][]string
-	var currentVaultRow int
-	for k, v := range config.Config.Vaults {
-		rows = append(rows, []string{k, v})
-		if k == config.Config.CurrentVault {
-			currentVaultRow = len(rows) - 1
-		}
+func GetVaults() []models.Vault {
+	var vaults []models.Vault
+	for vaultName, vaultPath := range config.Config.Vaults {
+		var v models.Vault
+		v.Name = vaultName
+		v.Path = vaultPath
+		vaults = append(vaults, v)
 	}
-	if err := components.VaultTable(currentVaultRow, rows); err != nil {
-		return err
-	}
-	return nil
+	return vaults
 }
 
 func UpdateVault(vaultName, newVaultName, newDir, newPassword string, key []byte) error {
