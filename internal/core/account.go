@@ -23,12 +23,8 @@ func CreateAccount(vaultName, serviceName, accountName, key string, account *mod
 	if err != nil {
 		return nil, nil, err
 	}
-	indexData, err := DecryptVaultIndex(vaultName, key)
-	if err != nil {
-		return nil, nil, err
-	}
 
-	vaultIndex, runtimeIndex, err := OpenVaultIndex(indexData)
+	vaultIndex, runtimeIndex, err := GetVaultIndexAndRunTime(vaultName, key)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -50,19 +46,8 @@ func CreateAccount(vaultName, serviceName, accountName, key string, account *mod
 	}
 	runtimeIndex.AccountIDToName[serviceId][accountId] = accountName
 	runtimeIndex.AccountNameToID[serviceId][accountName] = accountId
-
-	// TODO: refactor to one function
-	indexBytes, err := json.Marshal(vaultIndex)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	encryptedIndexMapData, err := encryption.EncryptAge(indexBytes, key)
-	if err != nil {
-		return nil, nil, err
-	}
 	indexFilePath := filepath.Join(vaultPath, "index.age")
-	err = store.WriteFile(encryptedIndexMapData, indexFilePath)
+	err = WriteToIndexFile(vaultIndex, key, indexFilePath)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -75,15 +60,11 @@ func CreateAccount(vaultName, serviceName, accountName, key string, account *mod
 }
 
 func ListAccounts(vaultName, serviceName, key string) (*models.VaultIndex, *models.RuntimeIndex, error) {
-	indexData, err := DecryptVaultIndex(vaultName, key)
+	vaultIndex, runtimeIndex, err := GetVaultIndexAndRunTime(vaultName, key)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	vaultIndex, runtimeIndex, err := OpenVaultIndex(indexData)
-	if err != nil {
-		return nil, nil, err
-	}
 	if _, ok := runtimeIndex.ServiceNameToID[serviceName]; !ok {
 		return nil, nil, fmt.Errorf("service %s doesn't exist", serviceName)
 	}
@@ -133,12 +114,7 @@ func GetAccount(vaultName, serviceName, accountName, key string) (string, error)
 }
 
 func ViewAccount(vaultName, serviceName, accountName, key string) (*models.Account, error) {
-	indexData, err := DecryptVaultIndex(vaultName, key)
-	if err != nil {
-		return nil, err
-	}
-
-	_, runtimeIndex, err := OpenVaultIndex(indexData)
+	_, runtimeIndex, err := GetVaultIndexAndRunTime(vaultName, key)
 	if err != nil {
 		return nil, err
 	}
@@ -169,12 +145,7 @@ func ViewAccount(vaultName, serviceName, accountName, key string) (*models.Accou
 }
 
 func UpdateAccount(vaultName, serviceName, accountName, key string, newAccount *models.Account) error {
-	indexData, err := DecryptVaultIndex(vaultName, key)
-	if err != nil {
-		return err
-	}
-
-	vaultIndex, runtimeIndex, err := OpenVaultIndex(indexData)
+	vaultIndex, runtimeIndex, err := GetVaultIndexAndRunTime(vaultName, key)
 	if err != nil {
 		return err
 	}
@@ -194,20 +165,12 @@ func UpdateAccount(vaultName, serviceName, accountName, key string, newAccount *
 	runtimeIndex.AccountIDToName[serviceId][accountId] = newAccount.Username
 	runtimeIndex.AccountNameToID[serviceId][newAccount.Username] = accountId
 	delete(runtimeIndex.AccountNameToID[serviceId], accountName)
-	indexBytes, err := json.Marshal(vaultIndex)
-	if err != nil {
+
+	indexFilePath := filepath.Join(vaultPath, "index.age")
+	if err := WriteToIndexFile(vaultIndex, key, indexFilePath); err != nil {
 		return err
 	}
 
-	encryptedIndexMapData, err := encryption.EncryptAge(indexBytes, key)
-	if err != nil {
-		return err
-	}
-	indexFilePath := filepath.Join(vaultPath, "index.age")
-	err = store.WriteFile(encryptedIndexMapData, indexFilePath)
-	if err != nil {
-		return err
-	}
 	accountBytes, err := toml.Marshal(newAccount)
 	if err != nil {
 		return err
@@ -223,12 +186,7 @@ func UpdateAccount(vaultName, serviceName, accountName, key string, newAccount *
 }
 
 func DeleteAccount(vaultName, serviceName, accountName, key string) error {
-	indexData, err := DecryptVaultIndex(vaultName, key)
-	if err != nil {
-		return err
-	}
-
-	vaultIndex, runtimeIndex, err := OpenVaultIndex(indexData)
+	vaultIndex, runtimeIndex, err := GetVaultIndexAndRunTime(vaultName, key)
 	if err != nil {
 		return err
 	}
@@ -245,6 +203,18 @@ func DeleteAccount(vaultName, serviceName, accountName, key string) error {
 	delete(runtimeIndex.AccountNameToID[serviceId], accountName)
 	vaultPath := config.Config.Vaults[vaultName]
 	accountPath := filepath.Join(vaultPath, serviceId.String(), accountId.String()+".age")
+
+	indexFilePath := filepath.Join(vaultPath, "index.age")
+	if err := WriteToIndexFile(vaultIndex, key, indexFilePath); err != nil {
+		return err
+	}
+	if err := store.DeleteFile(accountPath); err != nil {
+		return err
+	}
+	return nil
+}
+
+func WriteToIndexFile(vaultIndex *models.VaultIndex, key, indexFilePath string) error {
 	indexBytes, err := json.Marshal(vaultIndex)
 	if err != nil {
 		return err
@@ -254,12 +224,8 @@ func DeleteAccount(vaultName, serviceName, accountName, key string) error {
 	if err != nil {
 		return err
 	}
-	indexFilePath := filepath.Join(vaultPath, "index.age")
 	err = store.WriteFile(encryptedIndexMapData, indexFilePath)
 	if err != nil {
-		return err
-	}
-	if err := store.DeleteFile(accountPath); err != nil {
 		return err
 	}
 	return nil

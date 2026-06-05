@@ -8,6 +8,7 @@ import (
 	"charm.land/huh/v2"
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/table"
+	"github.com/parthivsaikia/enmasec/internal/config"
 	"github.com/parthivsaikia/enmasec/internal/models"
 	"github.com/parthivsaikia/enmasec/internal/validation"
 	"golang.org/x/term"
@@ -35,7 +36,17 @@ func PasswordPrompt(prompt string) (string, error) {
 	return strings.TrimSpace(string(bytes)), nil
 }
 
-func VaultTable(currentVaultRow int, rows [][]string) error {
+func VaultTable(vaults []models.Vault) error {
+	var rows [][]string
+	var currentVaultRow int
+
+	for _, v := range vaults {
+		rows = append(rows, []string{v.Name, v.Path})
+		if v.Name == config.Config.CurrentVault {
+			currentVaultRow = len(rows) - 1
+		}
+	}
+
 	t := table.New().
 		Border(lipgloss.NormalBorder()).
 		Headers("Name", "Location").
