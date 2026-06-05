@@ -144,7 +144,8 @@ func newListCommand() *cobra.Command {
 		Short: "List all the available vaults",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := core.ListVaults(); err != nil {
+			vaults := core.GetVaults()
+			if err := components.VaultTable(vaults); err != nil {
 				return fmt.Errorf("unable to list vaults: %w", err)
 			}
 			return nil
