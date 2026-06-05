@@ -4,6 +4,11 @@ import (
 	"github.com/google/uuid"
 )
 
+type Vault struct {
+	Name string
+	Path string
+}
+
 type Account struct {
 	Username  string            `toml:"username"`
 	Password  string            `toml:"password"`
