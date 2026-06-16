@@ -36,8 +36,14 @@ type AccountEntry struct {
 }
 
 type RuntimeIndex struct {
+	// Vault pane
+	Vaults []*Vault
+	// Service pane
+	Services        []*ServiceEntry
 	ServiceNameToID map[string]uuid.UUID
 	ServiceIDToName map[uuid.UUID]string
-	AccountNameToID map[uuid.UUID]map[string]uuid.UUID
-	AccountIDToName map[uuid.UUID]map[uuid.UUID]string
+	// Accounts pane
+	AccountsByService map[uuid.UUID][]*AccountEntry
+	AccountNameToID   map[uuid.UUID]map[string]uuid.UUID
+	AccountIDToName   map[uuid.UUID]map[uuid.UUID]string
 }
