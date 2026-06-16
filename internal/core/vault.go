@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/google/uuid"
 	"github.com/parthivsaikia/enmasec/internal/config"
@@ -76,6 +77,9 @@ func GetVaults() []models.Vault {
 		v.Path = vaultPath
 		vaults = append(vaults, v)
 	}
+	sort.Slice(vaults, func(i, j int) bool {
+		return vaults[i].Name < vaults[j].Name
+	})
 	return vaults
 }
 
