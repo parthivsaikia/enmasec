@@ -31,9 +31,9 @@ func IsVaultCurrentVault(vaultName string) bool {
 	return vaultName == config.Config.CurrentVault
 }
 
-func CheckPasswordValid(password string) bool {
+func CheckPasswordValid(password string) error {
 	if len(password) < 8 {
-		return false
+		return fmt.Errorf("password must be longer than or equal to 8 characters")
 	}
 
 	var hasLower, hasUpper, hasDigit, hasSpecial bool
@@ -51,5 +51,8 @@ func CheckPasswordValid(password string) bool {
 		}
 	}
 
-	return hasLower && hasUpper && hasDigit && hasSpecial
+	if !(hasLower && hasUpper && hasDigit && hasSpecial) {
+		return fmt.Errorf("password not strong enough")
+	}
+	return nil
 }
