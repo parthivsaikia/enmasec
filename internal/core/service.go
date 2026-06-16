@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"sort"
 
 	"github.com/google/uuid"
 	"github.com/parthivsaikia/enmasec/internal/config"
@@ -63,18 +64,37 @@ func BuildRuntimeIndex(v *models.VaultIndex) *models.RuntimeIndex {
 		AccountIDToName: make(map[uuid.UUID]map[uuid.UUID]string),
 	}
 
+	var vaults []*models.Vault
+
+	for vault, path := range config.Config.Vaults {
+		vaults = append(vaults, &models.Vault{
+			Name: vault,
+			Path: path,
+		})
+	}
+	sort.Slice(vaults, func(i, j int) bool {
+		return vaults[i].Name < vaults[j].Name
+	})
+	r.Vaults = vaults
+
+	var services []*models.ServiceEntry
+
 	for svcID, svc := range v.Services {
 		r.ServiceNameToID[svc.Name] = svcID
 		r.ServiceIDToName[svcID] = svc.Name
 		r.AccountNameToID[svcID] = make(map[string]uuid.UUID)
 		r.AccountIDToName[svcID] = make(map[uuid.UUID]string)
+		services = append(services, svc)
 
 		for acctID, acct := range svc.Accounts {
 			r.AccountNameToID[svcID][acct.Name] = acctID
 			r.AccountIDToName[svcID][acctID] = acct.Name
+			r.AccountsByService[svcID] = append(r.AccountsByService[svcID], acct)
 		}
 	}
-
+	sort.Slice(services, func(i, j int) bool {
+		return vaults[i].Name < vaults[j].Name
+	})
 	return r
 }
 
