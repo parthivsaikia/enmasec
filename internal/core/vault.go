@@ -102,8 +102,8 @@ func UpdateVault(vaultName, newVaultName, newDir, newPassword string, key []byte
 	}
 
 	if newPassword != "" {
-		if !validation.CheckPasswordValid(newPassword) {
-			return fmt.Errorf("password is not strong enough")
+		if err := validation.CheckPasswordValid(newPassword); err != nil {
+			return err
 		}
 		f := filepath.Join(newVaultLocation, "key.age")
 		data, err := encryption.EncryptAge(key, newPassword)
