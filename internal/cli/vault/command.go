@@ -72,8 +72,8 @@ func newInitCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if !validation.CheckPasswordValid(password) {
-				return fmt.Errorf("validation error: password not strong enough")
+			if err := validation.CheckPasswordValid(password); err != nil {
+				return err
 			}
 			confirmPassword, err := components.PasswordPrompt("Enter master password again: ")
 			if err != nil {
@@ -194,8 +194,8 @@ func newUpdateCommand() *cobra.Command {
 			}
 
 			if newPassword != "" {
-				if !validation.CheckPasswordValid(newPassword) {
-					return fmt.Errorf("password not strong enough")
+				if err := validation.CheckPasswordValid(newPassword); err != nil {
+					return err
 				}
 			}
 
