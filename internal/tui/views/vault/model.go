@@ -76,18 +76,21 @@ type entry struct {
 func (e entry) FilterValue() string { return e.vault.Name }
 
 type Model struct {
-	vaults          list.Model
+	vaults          []*models.Vault
+	vaultsList      list.Model
 	vaultCreateForm input.VaultCreateForm
 }
 
-func New() Model {
-	vaults := core.GetVaults()
+func New(vaults []*models.Vault) Model {
+	if len(vaults) == 0 {
+		vaults = core.GetVaults()
+	}
 	var listItems []list.Item
 	var currentVaultIndex int
 
 	for i, vault := range vaults {
 		e := entry{
-			vault:  &vault,
+			vault:  vault,
 			status: locked,
 		}
 		listItems = append(listItems, e)
@@ -107,7 +110,8 @@ func New() Model {
 	l.DisableQuitKeybindings()
 
 	return Model{
-		vaults:          l,
+		vaults:          vaults,
+		vaultsList:      l,
 		vaultCreateForm: *input.NewVaultCreateForm(),
 	}
 }
@@ -122,7 +126,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	if _, ok := msg.(tea.WindowSizeMsg); ok {
 		var cmd tea.Cmd
 
-		m.vaults, cmd = m.vaults.Update(msg)
+		m.vaultsList, cmd = m.vaultsList.Update(msg)
 		cmds = append(cmds, cmd)
 
 		cmd = m.vaultCreateForm.Update(msg)
@@ -148,7 +152,7 @@ func (m Model) UpdateList(msg tea.Msg) (Model, tea.Cmd) {
 		}
 	}
 	var cmd tea.Cmd
-	m.vaults, cmd = m.vaults.Update(msg)
+	m.vaultsList, cmd = m.vaultsList.Update(msg)
 	return m, cmd
 }
 
@@ -168,7 +172,7 @@ func (m Model) UpdateCreateVaultInput(msg tea.Msg) (Model, tea.Cmd) {
 func (m Model) View() string {
 	width, height, _ := term.GetSize(0)
 
-	backGroundStr := m.vaults.View()
+	backGroundStr := m.vaultsList.View()
 
 	if !m.vaultCreateForm.IsOpen() {
 		return backGroundStr
