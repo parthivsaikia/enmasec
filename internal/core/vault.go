@@ -69,13 +69,13 @@ func CheckoutVault(vaultName string) error {
 	return nil
 }
 
-func GetVaults() []models.Vault {
-	var vaults []models.Vault
+func GetVaults() []*models.Vault {
+	var vaults []*models.Vault
 	for vaultName, vaultPath := range config.Config.Vaults {
 		var v models.Vault
 		v.Name = vaultName
 		v.Path = vaultPath
-		vaults = append(vaults, v)
+		vaults = append(vaults, &v)
 	}
 	sort.Slice(vaults, func(i, j int) bool {
 		return vaults[i].Name < vaults[j].Name
