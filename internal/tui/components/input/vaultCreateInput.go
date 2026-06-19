@@ -62,18 +62,24 @@ func (v *VaultCreateForm) Init() tea.Cmd {
 }
 
 func (v *VaultCreateForm) Update(msg tea.Msg) tea.Cmd {
+	var cmds []tea.Cmd
 	form, cmd := v.form.Update(msg)
+	if cmd != nil {
+		cmds = append(cmds, cmd)
+	}
 
 	if f, ok := form.(*huh.Form); ok {
 		v.form = f
 	}
 
 	if v.form.State == huh.StateCompleted {
+		cmd = vaultCreateCmd(v)
+		log.Print("cmd: ", cmd)
+		cmds = append(cmds, cmd)
 		v.Close()
-		return messages.VaultCreatedMsg(v.VaultPath, v.VaultName, v.Password)
 	}
 
-	return cmd
+	return tea.Batch(cmds...)
 }
 
 func (v *VaultCreateForm) View() string {
