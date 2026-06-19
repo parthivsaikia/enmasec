@@ -10,6 +10,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/parthivsaikia/enmasec/internal/models"
 	"github.com/parthivsaikia/enmasec/internal/tui/components/input"
+	"github.com/parthivsaikia/enmasec/internal/tui/messages"
 	"golang.org/x/term"
 )
 
@@ -125,6 +126,8 @@ func (m Model) UpdateList(msg tea.Msg) (Model, tea.Cmd) {
 			m.VaultCreateForm.Open()
 			return m, m.VaultCreateForm.Init()
 		}
+	case messages.VaultCreateMsg:
+		m.vaultsList = generateVaultList(m.Vaults)
 	}
 	var cmd tea.Cmd
 	m.vaultsList, cmd = m.vaultsList.Update(msg)
