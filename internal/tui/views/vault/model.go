@@ -76,7 +76,7 @@ type entry struct {
 func (e entry) FilterValue() string { return e.vault.Name }
 
 type Model struct {
-	vaults          []*models.Vault
+	Vaults          []*models.Vault
 	vaultsList      list.Model
 	vaultCreateForm input.VaultCreateForm
 }
