@@ -36,7 +36,7 @@ func PasswordPrompt(prompt string) (string, error) {
 	return strings.TrimSpace(string(bytes)), nil
 }
 
-func VaultTable(vaults []models.Vault) error {
+func VaultTable(vaults []*models.Vault) error {
 	var rows [][]string
 	var currentVaultRow int
 
