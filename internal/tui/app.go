@@ -1,7 +1,7 @@
 package tui
 
 import (
-	"fmt"
+	"log"
 	"os"
 
 	tea "charm.land/bubbletea/v2"
@@ -9,9 +9,15 @@ import (
 )
 
 func App() error {
+	logfilePath := "log.txt"
+	f, err := tea.LogToFile(logfilePath, "debug")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
 	p := tea.NewProgram(home.InitialModel())
 	if _, err := p.Run(); err != nil {
-		fmt.Printf("Alas, there's been an error: %v", err)
+		log.Fatal(err)
 		os.Exit(1)
 	}
 	return nil
