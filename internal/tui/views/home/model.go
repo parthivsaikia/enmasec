@@ -48,6 +48,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "tab":
 			m.pane = (m.pane + 1) % 3
+		case "q":
+			// TODO: make msg and cmds do this instead of this since there will be more windows
+			if !m.vaultModel.VaultCreateForm.IsOpen() {
+				return m, tea.Quit
+			}
 		}
 	}
 	switch m.pane {
