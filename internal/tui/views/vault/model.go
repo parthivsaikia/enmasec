@@ -78,7 +78,8 @@ func (e entry) FilterValue() string { return e.vault.Name }
 type Model struct {
 	Vaults          []*models.Vault
 	vaultsList      list.Model
-	vaultCreateForm input.VaultCreateForm
+	VaultCreateForm input.VaultCreateForm
+	IsScreenOpen    bool
 }
 
 func New(vaults []*models.Vault) Model {
