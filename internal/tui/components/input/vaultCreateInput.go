@@ -29,19 +29,19 @@ func NewVaultCreateForm() *VaultCreateForm {
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
+				Key("vaultName").
 				Title("Vault Name").
-				Validate(validation.ValidateVaultName).
-				Value(&vcf.VaultName),
+				Validate(validation.ValidateVaultName),
 			huh.NewInput().
+				Key("vaultPath").
 				Title("Vault Path").
 				Value(&vcf.VaultPath),
 			huh.NewInput().
+				Key("password").
 				Title("Password").
-				Validate(validation.CheckPasswordValid).
-				Value(&vcf.Password),
+				Validate(validation.CheckPasswordValid),
 			huh.NewInput().
 				Title("Confirm Password").
-				Value(&vcf.confirmPassword).
 				Validate(func(string) error {
 					if vcf.confirmPassword != vcf.Password {
 						return fmt.Errorf("passwords don't match")
