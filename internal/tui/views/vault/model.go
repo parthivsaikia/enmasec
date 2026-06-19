@@ -108,7 +108,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		return m, tea.Batch(cmds...)
 	}
 
-	if m.vaultCreateForm.IsOpen() {
+	if m.VaultCreateForm.IsOpen() {
+		m.IsScreenOpen = true
 		return m.UpdateCreateVaultInput(msg)
 	}
 
@@ -120,8 +121,8 @@ func (m Model) UpdateList(msg tea.Msg) (Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "n":
-			m.vaultCreateForm.Open()
-			return m, m.vaultCreateForm.Init()
+			m.VaultCreateForm.Open()
+			return m, m.VaultCreateForm.Init()
 		}
 	}
 	var cmd tea.Cmd
@@ -134,11 +135,12 @@ func (m Model) UpdateCreateVaultInput(msg tea.Msg) (Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "esc":
-			m.vaultCreateForm.Close()
+			m.VaultCreateForm.Close()
+			m.IsScreenOpen = false
 			return m, nil
 		}
 	}
-	cmd := m.vaultCreateForm.Update(msg)
+	cmd := m.VaultCreateForm.Update(msg)
 	return m, cmd
 }
 
@@ -147,11 +149,11 @@ func (m Model) View() string {
 
 	backGroundStr := m.vaultsList.View()
 
-	if !m.vaultCreateForm.IsOpen() {
+	if !m.VaultCreateForm.IsOpen() {
 		return backGroundStr
 	}
 
-	overlayStr := m.vaultCreateForm.View()
+	overlayStr := m.VaultCreateForm.View()
 
 	alignedStyle := lipgloss.NewStyle().Align(lipgloss.Center)
 	alignedOverlay := alignedStyle.Render(overlayStr)
