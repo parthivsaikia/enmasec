@@ -2,9 +2,11 @@ package input
 
 import (
 	"fmt"
+	"log"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/huh/v2"
+	"github.com/parthivsaikia/enmasec/internal/core"
 	"github.com/parthivsaikia/enmasec/internal/store"
 	"github.com/parthivsaikia/enmasec/internal/tui/messages"
 	"github.com/parthivsaikia/enmasec/internal/validation"
@@ -18,6 +20,22 @@ type VaultCreateForm struct {
 	VaultPath       string
 	Password        string
 	confirmPassword string
+}
+
+// cmd for creating vault
+func vaultCreateCmd(v *VaultCreateForm) tea.Cmd {
+	return func() tea.Msg {
+		v.VaultName = v.form.GetString("vaultName")
+		v.VaultPath = v.form.GetString("vaultPath")
+		v.Password = v.form.GetString("password")
+		vault, err := core.CreateVault(v.VaultPath, v.VaultName, v.Password)
+		if err != nil {
+			log.Print(err)
+			return messages.ErrMsg(err)
+		}
+		log.Print("vault created successfully")
+		return messages.VaultCreateMsg(vault)
+	}
 }
 
 func NewVaultCreateForm() *VaultCreateForm {
