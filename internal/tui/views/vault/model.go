@@ -83,33 +83,7 @@ type Model struct {
 }
 
 func New(vaults []*models.Vault) Model {
-	if len(vaults) == 0 {
-		vaults = core.GetVaults()
-	}
-	var listItems []list.Item
-	var currentVaultIndex int
-
-	for i, vault := range vaults {
-		e := entry{
-			vault:  vault,
-			status: locked,
-		}
-		listItems = append(listItems, e)
-		if vault.Name == config.Config.CurrentVault {
-			currentVaultIndex = i
-		}
-	}
-
-	s := newStyles(true)
-	delegate := itemDelegate{styles: &s}
-
-	l := list.New(listItems, delegate, 20, 20)
-	l.SetShowStatusBar(false)
-	l.SetShowTitle(false)
-	l.SetShowHelp(false)
-	l.Select(currentVaultIndex)
-	l.DisableQuitKeybindings()
-
+	l := generateVaultList(vaults)
 	return Model{
 		vaults:          vaults,
 		vaultsList:      l,
