@@ -95,6 +95,7 @@ func BuildRuntimeIndex(v *models.VaultIndex) *models.RuntimeIndex {
 	sort.Slice(services, func(i, j int) bool {
 		return vaults[i].Name < vaults[j].Name
 	})
+	r.Services = services
 	return r
 }
 
