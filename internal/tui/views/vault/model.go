@@ -83,9 +83,10 @@ type Model struct {
 func New(vaults []*models.Vault) Model {
 	l := generateVaultList(vaults)
 	return Model{
-		vaults:          vaults,
 		vaultsList:      l,
-		vaultCreateForm: *input.NewVaultCreateForm(),
+		VaultCreateForm: *input.NewVaultCreateForm(),
+		Vaults:          vaults,
+		IsScreenOpen:    false,
 	}
 }
 
@@ -102,7 +103,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.vaultsList, cmd = m.vaultsList.Update(msg)
 		cmds = append(cmds, cmd)
 
-		cmd = m.vaultCreateForm.Update(msg)
+		cmd = m.VaultCreateForm.Update(msg)
 		cmds = append(cmds, cmd)
 
 		return m, tea.Batch(cmds...)
