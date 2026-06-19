@@ -20,6 +20,7 @@ const (
 
 type model struct {
 	// data
+	vaults       []*models.Vault
 	runtimeIndex *models.RuntimeIndex
 	// panes
 	vaultModel vault.Model
@@ -28,8 +29,10 @@ type model struct {
 }
 
 func InitialModel() model {
+	vaults := core.GetVaults()
 	return model{
-		vaultModel: vault.New(),
+		vaults:     vaults,
+		vaultModel: vault.New(vaults),
 	}
 }
 
