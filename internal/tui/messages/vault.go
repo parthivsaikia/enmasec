@@ -1,14 +1,9 @@
 package messages
 
-import (
-	tea "charm.land/bubbletea/v2"
-	"github.com/parthivsaikia/enmasec/internal/core"
-)
+import "github.com/parthivsaikia/enmasec/internal/models"
 
-func VaultCreatedMsg(vaultPath, vaultName, password string) tea.Msg {
-	err := core.CreateVault(vaultPath, vaultName, password)
-	if err != nil {
-		return err
-	}
-	return nil
-}
+type VaultCreateMsg *models.Vault
+
+type VaultAddMsg []*models.Vault
+
+type ErrMsg error
