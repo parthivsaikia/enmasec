@@ -92,7 +92,7 @@ func newInitCommand() *cobra.Command {
 				dir = store.GetEnmasecDirLocation()
 			}
 
-			err = core.CreateVault(dir, vaultName, password)
+			_, err = core.CreateVault(dir, vaultName, password)
 			if err != nil {
 				return fmt.Errorf("unable to create vault: %w", err)
 			}

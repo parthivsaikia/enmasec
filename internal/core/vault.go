@@ -15,12 +15,12 @@ import (
 	"github.com/parthivsaikia/enmasec/internal/validation"
 )
 
-func CreateVault(dir, vaultName, password string) error {
+func CreateVault(dir, vaultName, password string) (*models.Vault, error) {
 	vaultPath := filepath.Join(dir, vaultName)
 	secretKey := encryption.RandomByte(32)
 	encryptedKey, err := encryption.EncryptAge(secretKey, password)
 	if err != nil {
-		return fmt.Errorf("unable to encrypt: %w", err)
+		return nil, fmt.Errorf("unable to encrypt: %w", err)
 	}
 	emptyIndex := &models.VaultIndex{
 		Version:  1,
@@ -28,19 +28,22 @@ func CreateVault(dir, vaultName, password string) error {
 	}
 	indexByte, err := json.Marshal(emptyIndex)
 	if err != nil {
-		return fmt.Errorf("unable to encrypt index data: %w", err)
+		return nil, fmt.Errorf("unable to encrypt index data: %w", err)
 	}
 	encryptedIndexByte, err := encryption.EncryptAge(indexByte, string(secretKey))
 	err = store.CreateVaultStore(vaultPath, password, encryptedKey, encryptedIndexByte)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	config.Config.CurrentVault = vaultName
 	config.Config.Vaults[vaultName] = vaultPath
 	if err := config.Save(); err != nil {
-		return fmt.Errorf("couldn't save config: %w", err)
+		return nil, fmt.Errorf("couldn't save config: %w", err)
 	}
-	return nil
+	return &models.Vault{
+		Path: vaultPath,
+		Name: vaultName,
+	}, nil
 }
 
 func UnlockVault(vaultName, password string) ([]byte, error) {
