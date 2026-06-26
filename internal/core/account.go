@@ -72,7 +72,8 @@ func ListAccounts(vaultName, serviceName, key string) (*models.VaultIndex, *mode
 	return vaultIndex, runtimeIndex, nil
 }
 
-func GetAccount(vaultName, serviceName, accountName, key string) (string, error) {
+// copy represents the copy flag in the command
+func GetAccount(vaultName, serviceName, accountName, key string, copy bool) (string, error) {
 	indexData, err := DecryptVaultIndex(vaultName, key)
 	if err != nil {
 		return "", err
@@ -106,8 +107,10 @@ func GetAccount(vaultName, serviceName, accountName, key string) (string, error)
 		return "", err
 	}
 
-	if err := clipboard.SpawnBackground(account.Password); err != nil {
-		return "", err
+	if copy {
+		if err := clipboard.SpawnBackground(account.Password); err != nil {
+			return "", err
+		}
 	}
 
 	return account.Password, nil
