@@ -3,6 +3,7 @@ package vault
 import (
 	"fmt"
 	"io"
+	"log"
 	"strings"
 
 	"charm.land/bubbles/v2/list"

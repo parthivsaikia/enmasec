@@ -148,22 +148,23 @@ func newGetCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			key, err := core.UnlockVault(currentVault, password)
-			if err != nil {
-				return fmt.Errorf("unable to unlock vault %s: %w", currentVault, err)
-			}
-			accountPassword, err := core.GetAccount(currentVault, serviceName, accountName, string(key))
-			if err != nil {
-				return err
-			}
 			copy, err := cmd.Flags().GetBool("copy")
 			if err != nil {
 				return err
 			}
+			key, err := core.UnlockVault(currentVault, password)
+			if err != nil {
+				return fmt.Errorf("unable to unlock vault %s: %w", currentVault, err)
+			}
+			accountPassword, err := core.GetAccount(currentVault, serviceName, accountName, string(key), copy)
+			if err != nil {
+				return err
+			}
+
 			if copy {
 				err := clipboard.WriteAll(accountPassword)
 				if err != nil {
-					return err
+					return fmt.Errorf("error in copying password: %w", err)
 				}
 			} else {
 				fmt.Println(accountPassword)
