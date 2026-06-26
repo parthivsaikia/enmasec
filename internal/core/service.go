@@ -58,10 +58,11 @@ func CreateService(vaultName, serviceName, key string) (*models.VaultIndex, *mod
 
 func BuildRuntimeIndex(v *models.VaultIndex) *models.RuntimeIndex {
 	r := &models.RuntimeIndex{
-		ServiceNameToID: make(map[string]uuid.UUID),
-		ServiceIDToName: make(map[uuid.UUID]string),
-		AccountNameToID: make(map[uuid.UUID]map[string]uuid.UUID),
-		AccountIDToName: make(map[uuid.UUID]map[uuid.UUID]string),
+		ServiceNameToID:   make(map[string]uuid.UUID),
+		ServiceIDToName:   make(map[uuid.UUID]string),
+		AccountNameToID:   make(map[uuid.UUID]map[string]uuid.UUID),
+		AccountIDToName:   make(map[uuid.UUID]map[uuid.UUID]string),
+		AccountsByService: map[uuid.UUID][]*models.AccountEntry{},
 	}
 
 	var vaults []*models.Vault
