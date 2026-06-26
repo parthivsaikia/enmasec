@@ -1,6 +1,7 @@
 package clipboard
 
 import (
+	"io"
 	"os"
 	"os/exec"
 )
@@ -10,10 +11,23 @@ func SpawnBackground(password string) error {
 	if err != nil {
 		return err
 	}
-	cmd := exec.Command(exe, "clear-password", password)
+	cmd := exec.Command(exe, "clear-password")
+
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return err
+	}
 	setSysProcAttr(cmd)
+
 	if err := cmd.Start(); err != nil {
 		return err
 	}
+	if _, err := io.WriteString(stdin, password); err != nil {
+		return err
+	}
+	if err := stdin.Close(); err != nil {
+		return err
+	}
+
 	return nil
 }
