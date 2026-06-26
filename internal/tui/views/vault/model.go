@@ -6,11 +6,13 @@ import (
 	"log"
 	"strings"
 
+	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/list"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/parthivsaikia/enmasec/internal/models"
 	"github.com/parthivsaikia/enmasec/internal/tui/components/input"
+	"github.com/parthivsaikia/enmasec/internal/tui/keymaps"
 	"github.com/parthivsaikia/enmasec/internal/tui/messages"
 	"golang.org/x/term"
 )
@@ -84,6 +86,7 @@ type Model struct {
 
 func New(vaults []*models.Vault) Model {
 	l := generateVaultList(vaults)
+	l.SetShowPagination(false)
 	return Model{
 		vaultsList:      l,
 		VaultCreateForm: *input.NewVaultCreateForm(),
@@ -121,14 +124,28 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 func (m Model) UpdateList(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyPressMsg:
-		switch msg.String() {
-		case "n":
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(msg, keymaps.VaultKeys.OpenVaultCreateForm):
 			m.VaultCreateForm.Open()
 			return m, m.VaultCreateForm.Init()
 		}
 	case messages.VaultCreateMsg:
-		m.vaultsList = generateVaultList(m.Vaults)
+		index := 0
+		vaultName := msg.Name
+		for i, v := range m.Vaults[:len(m.Vaults)-1] {
+			if v.Name > vaultName {
+				index = i
+				log.Print(index)
+				break
+			}
+		}
+		entry := entry{
+			vault:  msg,
+			status: unlocked,
+		}
+		m.vaultsList.InsertItem(index, entry)
+		m.vaultsList.Select(index)
 	}
 	var cmd tea.Cmd
 	m.vaultsList, cmd = m.vaultsList.Update(msg)
