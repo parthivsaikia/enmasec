@@ -13,7 +13,7 @@ import (
 )
 
 type VaultCreateForm struct {
-	form *huh.Form
+	Form *huh.Form
 	open bool
 
 	VaultName       string
@@ -25,9 +25,9 @@ type VaultCreateForm struct {
 // cmd for creating vault
 func vaultCreateCmd(v *VaultCreateForm) tea.Cmd {
 	return func() tea.Msg {
-		v.VaultName = v.form.GetString("vaultName")
-		v.VaultPath = v.form.GetString("vaultPath")
-		v.Password = v.form.GetString("password")
+		v.VaultName = v.Form.GetString("vaultName")
+		v.VaultPath = v.Form.GetString("vaultPath")
+		v.Password = v.Form.GetString("password")
 		vault, err := core.CreateVault(v.VaultPath, v.VaultName, v.Password)
 		if err != nil {
 			log.Print(err)
@@ -44,7 +44,7 @@ func NewVaultCreateForm() *VaultCreateForm {
 		VaultPath: store.GetEnmasecDirLocation(),
 	}
 
-	form := huh.NewForm(
+	Form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
 				Key("vaultName").
@@ -68,29 +68,29 @@ func NewVaultCreateForm() *VaultCreateForm {
 				}),
 		),
 	)
-	form.WithShowHelp(false)
-	// form.WithShowErrors(false)
+	Form.WithShowHelp(false)
+	// Form.WithShowErrors(false)
 
-	vcf.form = form
+	vcf.Form = Form
 	return vcf
 }
 
 func (v *VaultCreateForm) Init() tea.Cmd {
-	return v.form.Init()
+	return v.Form.Init()
 }
 
 func (v *VaultCreateForm) Update(msg tea.Msg) tea.Cmd {
 	var cmds []tea.Cmd
-	form, cmd := v.form.Update(msg)
+	Form, cmd := v.Form.Update(msg)
 	if cmd != nil {
 		cmds = append(cmds, cmd)
 	}
 
-	if f, ok := form.(*huh.Form); ok {
-		v.form = f
+	if f, ok := Form.(*huh.Form); ok {
+		v.Form = f
 	}
 
-	if v.form.State == huh.StateCompleted {
+	if v.Form.State == huh.StateCompleted {
 		cmd = vaultCreateCmd(v)
 		log.Print("cmd: ", cmd)
 		cmds = append(cmds, cmd)
@@ -101,7 +101,7 @@ func (v *VaultCreateForm) Update(msg tea.Msg) tea.Cmd {
 }
 
 func (v *VaultCreateForm) View() string {
-	return v.form.View()
+	return v.Form.View()
 }
 
 func (v *VaultCreateForm) IsOpen() bool {
@@ -109,7 +109,7 @@ func (v *VaultCreateForm) IsOpen() bool {
 }
 
 func (v *VaultCreateForm) Open() {
-	v.form.State = huh.StateNormal
+	v.Form.State = huh.StateNormal
 	v.open = true
 }
 

@@ -2,12 +2,12 @@ package vault
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"strings"
 
 	"charm.land/bubbles/v2/key"
-	"charm.land/bubbles/v2/list"
+	"charm.land/bubbles/v2/textinput"
+	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/parthivsaikia/enmasec/internal/models"
@@ -25,73 +25,40 @@ const (
 	unlocked
 )
 
-type styles struct {
-	title        lipgloss.Style
-	item         lipgloss.Style
-	selectedItem lipgloss.Style
-	pagination   lipgloss.Style
-	help         lipgloss.Style
-	quitText     lipgloss.Style
-}
-
-func newStyles(darkBG bool) styles {
-	var s styles
-	s.title = lipgloss.NewStyle().MarginLeft(2)
-	s.item = lipgloss.NewStyle().PaddingLeft(4)
-	s.selectedItem = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
-	s.pagination = list.DefaultStyles(darkBG).PaginationStyle.PaddingLeft(4)
-	s.help = list.DefaultStyles(darkBG).HelpStyle.PaddingLeft(4).PaddingBottom(1)
-	s.quitText = lipgloss.NewStyle().Margin(1, 0, 2, 4)
-	return s
-}
-
-type itemDelegate struct {
-	styles *styles
-}
-
-func (d itemDelegate) Height() int                             { return 1 }
-func (d itemDelegate) Spacing() int                            { return 0 }
-func (d itemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
-func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	i, ok := listItem.(entry)
-	if !ok {
-		return
-	}
-
-	str := fmt.Sprintf("%d. %s", index+1, i.vault.Name)
-
-	fn := d.styles.item.Render
-	if index == m.Index() {
-		fn = func(s ...string) string {
-			return d.styles.selectedItem.Render("> " + strings.Join(s, " "))
-		}
-	}
-
-	fmt.Fprint(w, fn(str))
-}
-
 type entry struct {
 	vault  *models.Vault
 	status lockedStatus
 }
 
-func (e entry) FilterValue() string { return e.vault.Name }
-
 type Model struct {
-	Vaults          []*models.Vault
-	vaultsList      list.Model
-	VaultCreateForm input.VaultCreateForm
+	VaultCreateForm *input.VaultCreateForm
 	IsScreenOpen    bool
+	cursor          int
+	viewport        viewport.Model
+	searchBox       textinput.Model
+	entries         []entry
+	list            string
 }
 
 func New(vaults []*models.Vault) Model {
-	l := generateVaultList(vaults)
-	l.SetShowPagination(false)
+	var entries []entry
+	for _, v := range vaults {
+		e := entry{
+			vault:  v,
+			status: locked,
+		}
+		entries = append(entries, e)
+	}
+	var v viewport.Model
+	list := generateVaultList(entries)
+	v.SetContent(list)
 	return Model{
-		vaultsList:      l,
-		VaultCreateForm: *input.NewVaultCreateForm(),
-		Vaults:          vaults,
+		entries:         entries,
+		cursor:          0,
+		VaultCreateForm: input.NewVaultCreateForm(),
 		IsScreenOpen:    false,
+		viewport:        v,
+		list:            list,
 	}
 }
 
@@ -101,11 +68,13 @@ func (m Model) Init() tea.Cmd {
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmds []tea.Cmd
-
-	if _, ok := msg.(tea.WindowSizeMsg); ok {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
 		var cmd tea.Cmd
+		log.Print("WindowSizeMsg received: ", msg)
 
-		m.vaultsList, cmd = m.vaultsList.Update(msg)
+		m.viewport = viewport.New(viewport.WithWidth(msg.Width/3), viewport.WithHeight(msg.Height))
+		m.viewport.SetContent(m.list)
 		cmds = append(cmds, cmd)
 
 		cmd = m.VaultCreateForm.Update(msg)
@@ -128,27 +97,13 @@ func (m Model) UpdateList(msg tea.Msg) (Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, keymaps.VaultKeys.OpenVaultCreateForm):
 			m.VaultCreateForm.Open()
+			log.Print("state: ", m.VaultCreateForm.View())
 			return m, m.VaultCreateForm.Init()
 		}
 	case messages.VaultCreateMsg:
-		index := 0
-		vaultName := msg.Name
-		for i, v := range m.Vaults[:len(m.Vaults)-1] {
-			if v.Name > vaultName {
-				index = i
-				log.Print(index)
-				break
-			}
-		}
-		entry := entry{
-			vault:  msg,
-			status: unlocked,
-		}
-		m.vaultsList.InsertItem(index, entry)
-		m.vaultsList.Select(index)
+		m.VaultCreateForm = input.NewVaultCreateForm()
 	}
 	var cmd tea.Cmd
-	m.vaultsList, cmd = m.vaultsList.Update(msg)
 	return m, cmd
 }
 
@@ -169,7 +124,8 @@ func (m Model) UpdateCreateVaultInput(msg tea.Msg) (Model, tea.Cmd) {
 func (m Model) View() string {
 	width, height, _ := term.GetSize(0)
 
-	backGroundStr := m.vaultsList.View()
+	backGroundStr := m.viewport.View()
+	log.Print("backGroundStr: ", backGroundStr)
 
 	if !m.VaultCreateForm.IsOpen() {
 		return backGroundStr
@@ -189,4 +145,21 @@ func (m Model) View() string {
 
 	compositedView := lipgloss.NewCompositor(layers...)
 	return compositedView.Render()
+}
+
+func generateVaultList(entries []entry) string {
+	var s strings.Builder
+	lockedIcon := "[L]"
+	unlockedIcon := "[U]"
+	for _, e := range entries {
+		var lockedStatus string
+		if e.status == locked {
+			lockedStatus = lockedIcon
+		} else {
+			lockedStatus = unlockedIcon
+		}
+		line := fmt.Sprintf("%s %s\n", lockedStatus, e.vault.Name)
+		s.WriteString(line)
+	}
+	return s.String()
 }

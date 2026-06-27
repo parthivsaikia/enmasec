@@ -58,7 +58,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case messages.VaultCreateMsg:
 		log.Print("msg: ", msg)
 		m.vaults = append(m.vaults, msg)
-		m.vaultModel.Vaults = m.vaults
 		m.vaultModel, _ = m.vaultModel.Update(msg)
 		return m, nil
 	}
