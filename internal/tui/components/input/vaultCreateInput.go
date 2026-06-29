@@ -57,9 +57,11 @@ func NewVaultCreateForm() *VaultCreateForm {
 			huh.NewInput().
 				Key("password").
 				Title("Password").
+				EchoMode(huh.EchoModePassword).
 				Validate(validation.CheckPasswordValid),
 			huh.NewInput().
 				Title("Confirm Password").
+				EchoMode(huh.EchoModePassword).
 				Validate(func(string) error {
 					if vcf.confirmPassword != vcf.Password {
 						return fmt.Errorf("passwords don't match")
