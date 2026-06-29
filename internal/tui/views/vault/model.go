@@ -14,6 +14,7 @@ import (
 	"github.com/parthivsaikia/enmasec/internal/tui/components/input"
 	"github.com/parthivsaikia/enmasec/internal/tui/keymaps"
 	"github.com/parthivsaikia/enmasec/internal/tui/messages"
+	"github.com/parthivsaikia/enmasec/internal/tui/theme"
 	"golang.org/x/term"
 )
 
@@ -38,6 +39,7 @@ type Model struct {
 	searchBox       textinput.Model
 	entries         []entry
 	list            string
+	style           *lipgloss.Style
 }
 
 func New(vaults []*models.Vault) Model {
@@ -59,6 +61,7 @@ func New(vaults []*models.Vault) Model {
 		IsScreenOpen:    false,
 		viewport:        v,
 		list:            list,
+		style:           theme.GetCurrentStyle().PaneStyles,
 	}
 }
 
@@ -71,8 +74,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		var cmd tea.Cmd
-		log.Print("WindowSizeMsg received: ", msg)
-
 		m.viewport = viewport.New(viewport.WithWidth(msg.Width/3), viewport.WithHeight(msg.Height))
 		m.viewport.SetContent(m.list)
 		cmds = append(cmds, cmd)
@@ -97,8 +98,11 @@ func (m Model) UpdateList(msg tea.Msg) (Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, keymaps.VaultKeys.OpenVaultCreateForm):
 			m.VaultCreateForm.Open()
-			log.Print("state: ", m.VaultCreateForm.View())
 			return m, m.VaultCreateForm.Init()
+		case key.Matches(msg, keymaps.CommonKeyMap.Up):
+			m.cursor--
+		case key.Matches(msg, keymaps.CommonKeyMap.Down):
+			m.cursor++
 		}
 	case messages.VaultCreateMsg:
 		m.VaultCreateForm = input.NewVaultCreateForm()
@@ -124,7 +128,7 @@ func (m Model) UpdateCreateVaultInput(msg tea.Msg) (Model, tea.Cmd) {
 func (m Model) View() string {
 	width, height, _ := term.GetSize(0)
 
-	backGroundStr := m.viewport.View()
+	backGroundStr := m.style.Render(m.viewport.View())
 	log.Print("backGroundStr: ", backGroundStr)
 
 	if !m.VaultCreateForm.IsOpen() {
