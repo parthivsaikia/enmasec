@@ -13,21 +13,19 @@ import (
 )
 
 type VaultCreateForm struct {
-	Form *huh.Form
-	open bool
-
-	VaultName       string
-	VaultPath       string
-	Password        string
-	confirmPassword string
+	form      *huh.Form
+	open      bool
+	VaultName string
+	VaultPath string
+	Password  string
 }
 
 // cmd for creating vault
 func vaultCreateCmd(v *VaultCreateForm) tea.Cmd {
 	return func() tea.Msg {
-		v.VaultName = v.Form.GetString("vaultName")
-		v.VaultPath = v.Form.GetString("vaultPath")
-		v.Password = v.Form.GetString("password")
+		v.VaultName = v.form.GetString("vaultName")
+		v.VaultPath = v.form.GetString("vaultPath")
+		v.Password = v.form.GetString("password")
 		vault, err := core.CreateVault(v.VaultPath, v.VaultName, v.Password)
 		if err != nil {
 			log.Print(err)
@@ -64,7 +62,7 @@ func NewVaultCreateForm() *VaultCreateForm {
 				Title("Confirm Password").
 				EchoMode(huh.EchoModePassword).
 				Validate(func(confirmPassword string) error {
-					password := vcf.Form.GetString("password")
+					password := vcf.form.GetString("password")
 					if password != confirmPassword {
 						log.Print("password: ", password)
 						log.Print("confirmPassword: ", confirmPassword)
@@ -77,26 +75,26 @@ func NewVaultCreateForm() *VaultCreateForm {
 	Form.WithShowHelp(false)
 	// Form.WithShowErrors(false)
 
-	vcf.Form = Form
+	vcf.form = Form
 	return vcf
 }
 
 func (v *VaultCreateForm) Init() tea.Cmd {
-	return v.Form.Init()
+	return v.form.Init()
 }
 
 func (v *VaultCreateForm) Update(msg tea.Msg) tea.Cmd {
 	var cmds []tea.Cmd
-	Form, cmd := v.Form.Update(msg)
+	Form, cmd := v.form.Update(msg)
 	if cmd != nil {
 		cmds = append(cmds, cmd)
 	}
 
 	if f, ok := Form.(*huh.Form); ok {
-		v.Form = f
+		v.form = f
 	}
 
-	if v.Form.State == huh.StateCompleted {
+	if v.form.State == huh.StateCompleted {
 		cmd = vaultCreateCmd(v)
 		log.Print("cmd: ", cmd)
 		cmds = append(cmds, cmd)
@@ -107,7 +105,7 @@ func (v *VaultCreateForm) Update(msg tea.Msg) tea.Cmd {
 }
 
 func (v *VaultCreateForm) View() string {
-	return v.Form.View()
+	return v.form.View()
 }
 
 func (v *VaultCreateForm) IsOpen() bool {
@@ -115,7 +113,7 @@ func (v *VaultCreateForm) IsOpen() bool {
 }
 
 func (v *VaultCreateForm) Open() {
-	v.Form.State = huh.StateNormal
+	v.form.State = huh.StateNormal
 	v.open = true
 }
 
