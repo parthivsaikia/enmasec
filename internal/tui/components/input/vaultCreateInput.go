@@ -60,10 +60,14 @@ func NewVaultCreateForm() *VaultCreateForm {
 				EchoMode(huh.EchoModePassword).
 				Validate(validation.CheckPasswordValid),
 			huh.NewInput().
+				Key("confirmPassword").
 				Title("Confirm Password").
 				EchoMode(huh.EchoModePassword).
-				Validate(func(string) error {
-					if vcf.confirmPassword != vcf.Password {
+				Validate(func(confirmPassword string) error {
+					password := vcf.Form.GetString("password")
+					if password != confirmPassword {
+						log.Print("password: ", password)
+						log.Print("confirmPassword: ", confirmPassword)
 						return fmt.Errorf("passwords don't match")
 					}
 					return nil
