@@ -8,9 +8,9 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/google/uuid"
 	"github.com/parthivsaikia/enmasec/internal/clipboard"
-	"github.com/parthivsaikia/enmasec/internal/config"
 	"github.com/parthivsaikia/enmasec/internal/encryption"
 	"github.com/parthivsaikia/enmasec/internal/models"
+	"github.com/parthivsaikia/enmasec/internal/registry"
 	"github.com/parthivsaikia/enmasec/internal/store"
 )
 
@@ -39,7 +39,7 @@ func CreateAccount(vaultName, serviceName, accountName, key string, account *mod
 	if _, ok := runtimeIndex.AccountIDToName[serviceId][accountId]; ok {
 		return nil, nil, fmt.Errorf("account %s already exists", accountName)
 	}
-	vaultPath := config.Config.Vaults[vaultName]
+	vaultPath := registry.Registry.Vaults[vaultName]
 	accoutFilePath := filepath.Join(vaultPath, serviceId.String(), fmt.Sprintf("%s.age", accountId.String()))
 	vaultIndex.Services[serviceId].Accounts[accountId] = &models.AccountEntry{
 		Name: accountName,
@@ -91,7 +91,7 @@ func GetAccount(vaultName, serviceName, accountName, key string, copy bool) (str
 	if !ok {
 		return "", fmt.Errorf("account doesn't exist %s", accountName)
 	}
-	vaultPath := config.Config.Vaults[vaultName]
+	vaultPath := registry.Registry.Vaults[vaultName]
 	accountPath := filepath.Join(vaultPath, serviceId.String(), accountId.String()+".age")
 	accountData, err := store.ReadFile(accountPath)
 	if err != nil {
@@ -129,7 +129,7 @@ func ViewAccount(vaultName, serviceName, accountName, key string) (*models.Accou
 	if !ok {
 		return nil, fmt.Errorf("account doesn't exist %s", accountName)
 	}
-	vaultPath := config.Config.Vaults[vaultName]
+	vaultPath := registry.Registry.Vaults[vaultName]
 	accountPath := filepath.Join(vaultPath, serviceId.String(), accountId.String()+".age")
 	accountData, err := store.ReadFile(accountPath)
 	if err != nil {
@@ -160,7 +160,7 @@ func UpdateAccount(vaultName, serviceName, accountName, key string, newAccount *
 	if !ok {
 		return fmt.Errorf("account doesn't exist %s", accountName)
 	}
-	vaultPath := config.Config.Vaults[vaultName]
+	vaultPath := registry.Registry.Vaults[vaultName]
 	accountPath := filepath.Join(vaultPath, serviceId.String(), accountId.String()+".age")
 	vaultIndex.Services[serviceId].Accounts[accountId] = &models.AccountEntry{
 		Name: newAccount.Username,
@@ -204,7 +204,7 @@ func DeleteAccount(vaultName, serviceName, accountName, key string) error {
 	delete(vaultIndex.Services[serviceId].Accounts, accountId)
 	delete(runtimeIndex.AccountIDToName[serviceId], accountId)
 	delete(runtimeIndex.AccountNameToID[serviceId], accountName)
-	vaultPath := config.Config.Vaults[vaultName]
+	vaultPath := registry.Registry.Vaults[vaultName]
 	accountPath := filepath.Join(vaultPath, serviceId.String(), accountId.String()+".age")
 
 	indexFilePath := filepath.Join(vaultPath, "index.age")

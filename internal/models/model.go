@@ -17,8 +17,15 @@ type Account struct {
 }
 
 type Config struct {
-	CurrentVault string            `yaml:"current_vault"`
-	Vaults       map[string]string `yaml:"vaults"`
+	Theme string
+}
+
+type State struct {
+	CurrentVault string `yaml:"current_vault"`
+}
+
+type Registry struct {
+	Vaults map[string]string `yaml:"vaults"`
 }
 
 type VaultIndex struct {

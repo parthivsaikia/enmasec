@@ -23,7 +23,7 @@ func NewCommand() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.AddCommand(newInitCommand())
+	cmd.AddCommand(newAddCommand())
 	cmd.AddCommand(newCheckoutCommand())
 	cmd.AddCommand(newListCommand())
 	cmd.AddCommand(newUpdateCommand())
@@ -33,9 +33,9 @@ func NewCommand() *cobra.Command {
 	return cmd
 }
 
-func newInitCommand() *cobra.Command {
+func newAddCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "init [vault name]",
+		Use:   "add [vault name]",
 		Short: "Initialize a new vault",
 		Args:  cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {

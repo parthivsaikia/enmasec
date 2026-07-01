@@ -9,6 +9,8 @@ import (
 	"github.com/parthivsaikia/enmasec/internal/cli/vault"
 	"github.com/parthivsaikia/enmasec/internal/clipboard"
 	"github.com/parthivsaikia/enmasec/internal/config"
+	"github.com/parthivsaikia/enmasec/internal/registry"
+	"github.com/parthivsaikia/enmasec/internal/state"
 	"github.com/parthivsaikia/enmasec/internal/tui"
 	"github.com/parthivsaikia/enmasec/internal/utils"
 	"github.com/spf13/cobra"
@@ -50,5 +52,13 @@ func init() {
 	config.Init()
 	if err := config.Load(); err != nil {
 		logger.Error(fmt.Sprintf("couldn't load config: %v", err))
+	}
+	registry.Init()
+	if err := registry.Load(); err != nil {
+		logger.Error(fmt.Sprintf("couldn't load registry: %v", err))
+	}
+	state.Init()
+	if err := state.Load(); err != nil {
+		logger.Error(fmt.Sprintf("couldn't load state: %v", err))
 	}
 }

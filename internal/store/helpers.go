@@ -20,6 +20,12 @@ func GetEnmasecConfigDirLocation() string {
 	return enmasecConfigDirLocation
 }
 
+func GetEnmasecStateDirLocation() string {
+	stateDir := xdg.StateHome
+	enmasecStateDirLocation := filepath.Join(stateDir, "enmasec")
+	return enmasecStateDirLocation
+}
+
 func CheckFileExists(path string) bool {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return false

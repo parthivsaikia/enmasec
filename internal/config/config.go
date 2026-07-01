@@ -25,14 +25,11 @@ func checkConfigFile() string {
 }
 
 func Init() {
-	Config.CurrentVault = ""
-	Config.Vaults = map[string]string{}
+	Config.Theme = ""
 }
 
 func Load() error {
 	configFile := checkConfigFile()
-	pruned := false
-
 	configData, err := os.ReadFile(configFile)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -45,15 +42,7 @@ func Load() error {
 	if err != nil {
 		return err
 	}
-	for k, v := range Config.Vaults {
-		if !store.CheckFileExists(v) {
-			delete(Config.Vaults, k)
-			pruned = true
-		}
-	}
-	if pruned {
-		return Save()
-	}
+
 	return nil
 }
 

@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/parthivsaikia/enmasec/internal/cli/components"
-	"github.com/parthivsaikia/enmasec/internal/config"
 	"github.com/parthivsaikia/enmasec/internal/core"
+	"github.com/parthivsaikia/enmasec/internal/state"
 	"github.com/parthivsaikia/enmasec/internal/validation"
 	"github.com/spf13/cobra"
 )
@@ -120,7 +120,7 @@ func newUpdateCommand() *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			serviceName := args[0]
-			currentVault := config.Config.CurrentVault
+			currentVault := state.State.CurrentVault
 
 			name, err := cmd.Flags().GetString("name")
 			if err != nil {
@@ -164,7 +164,7 @@ func newDeleteCmd() *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			serviceName := args[0]
-			currentVault := config.Config.CurrentVault
+			currentVault := state.State.CurrentVault
 			password, err := components.PasswordPrompt(fmt.Sprintf("enter master password for vault %s", currentVault))
 			if err != nil {
 				return err
@@ -190,7 +190,7 @@ func resolveVault(cmd *cobra.Command) (string, error) {
 		return "", err
 	}
 	if vault == "" {
-		vault = config.Config.CurrentVault
+		vault = state.State.CurrentVault
 	}
 	return vault, err
 }

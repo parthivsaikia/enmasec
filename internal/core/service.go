@@ -7,14 +7,15 @@ import (
 	"sort"
 
 	"github.com/google/uuid"
-	"github.com/parthivsaikia/enmasec/internal/config"
 	"github.com/parthivsaikia/enmasec/internal/encryption"
 	"github.com/parthivsaikia/enmasec/internal/models"
+	"github.com/parthivsaikia/enmasec/internal/registry"
+	"github.com/parthivsaikia/enmasec/internal/state"
 	"github.com/parthivsaikia/enmasec/internal/store"
 )
 
 func CreateService(vaultName, serviceName, key string) (*models.VaultIndex, *models.RuntimeIndex, error) {
-	vaultPath := config.Config.Vaults[vaultName]
+	vaultPath := registry.Registry.Vaults[vaultName]
 	id := uuid.New()
 
 	vaultIndex, runtimeIndex, err := GetVaultIndexAndRunTime(vaultName, key)
@@ -67,7 +68,7 @@ func BuildRuntimeIndex(v *models.VaultIndex) *models.RuntimeIndex {
 
 	var vaults []*models.Vault
 
-	for vault, path := range config.Config.Vaults {
+	for vault, path := range registry.Registry.Vaults {
 		vaults = append(vaults, &models.Vault{
 			Name: vault,
 			Path: path,
@@ -134,8 +135,8 @@ func ListService(vaultName, key string) error {
 }
 
 func UpdateService(oldName, newName, key string) (*models.VaultIndex, *models.RuntimeIndex, error) {
-	vaultName := config.Config.CurrentVault
-	vaultPath := config.Config.Vaults[vaultName]
+	vaultName := state.State.CurrentVault
+	vaultPath := registry.Registry.Vaults[vaultName]
 	indexFilePath := filepath.Join(vaultPath, "index.age")
 	id := uuid.New()
 
@@ -174,8 +175,8 @@ func UpdateService(oldName, newName, key string) (*models.VaultIndex, *models.Ru
 }
 
 func DeleteService(name, key string) (*models.VaultIndex, *models.RuntimeIndex, error) {
-	vaultName := config.Config.CurrentVault
-	vaultPath := config.Config.Vaults[vaultName]
+	vaultName := state.State.CurrentVault
+	vaultPath := registry.Registry.Vaults[vaultName]
 	indexFilePath := filepath.Join(vaultPath, "index.age")
 
 	vaultIndex, runtimeIndex, err := GetVaultIndexAndRunTime(vaultName, key)

@@ -6,9 +6,9 @@ import (
 
 	"github.com/atotto/clipboard"
 	"github.com/parthivsaikia/enmasec/internal/cli/components"
-	"github.com/parthivsaikia/enmasec/internal/config"
 	"github.com/parthivsaikia/enmasec/internal/core"
 	"github.com/parthivsaikia/enmasec/internal/models"
+	"github.com/parthivsaikia/enmasec/internal/state"
 	"github.com/parthivsaikia/enmasec/internal/validation"
 	"github.com/spf13/cobra"
 )
@@ -55,7 +55,7 @@ func newAddCommand() *cobra.Command {
 			serviceName := args[0]
 			accountName := args[1]
 
-			currentVault := config.Config.CurrentVault
+			currentVault := state.State.CurrentVault
 			password, err := components.PasswordPrompt(fmt.Sprintf("enter master password for vault %s", currentVault))
 			if err != nil {
 				return err
@@ -98,7 +98,7 @@ func newListCommand() *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			serviceName := args[0]
-			currentVault := config.Config.CurrentVault
+			currentVault := state.State.CurrentVault
 			password, err := components.PasswordPrompt(fmt.Sprintf("enter master password for vault %s: ", currentVault))
 			if err != nil {
 				return err
@@ -143,7 +143,7 @@ func newGetCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			serviceName := args[0]
 			accountName := args[1]
-			currentVault := config.Config.CurrentVault
+			currentVault := state.State.CurrentVault
 			password, err := components.PasswordPrompt(fmt.Sprintf("enter master password for vault %s: ", currentVault))
 			if err != nil {
 				return err
@@ -198,7 +198,7 @@ func newUpdateCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			serviceName := args[0]
 			accountName := args[1]
-			currentVault := config.Config.CurrentVault
+			currentVault := state.State.CurrentVault
 			password, err := components.PasswordPrompt(fmt.Sprintf("enter master password for vault %s: ", currentVault))
 			if err != nil {
 				return err
@@ -245,7 +245,7 @@ func NewDeleteCommand() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			currentVault := config.Config.CurrentVault
+			currentVault := state.State.CurrentVault
 			serviceName := args[0]
 			accountName := args[1]
 			password, err := components.PasswordPrompt(fmt.Sprintf("enter master password for vault %s: ", currentVault))
@@ -285,7 +285,7 @@ func NewViewCommand() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			currentVault := config.Config.CurrentVault
+			currentVault := state.State.CurrentVault
 			serviceName := args[0]
 			accountName := args[1]
 			password, err := components.PasswordPrompt(fmt.Sprintf("enter master password for vault %s: ", currentVault))

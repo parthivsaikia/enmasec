@@ -5,7 +5,8 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/parthivsaikia/enmasec/internal/config"
+	"github.com/parthivsaikia/enmasec/internal/registry"
+	"github.com/parthivsaikia/enmasec/internal/state"
 	"github.com/parthivsaikia/enmasec/internal/store"
 )
 
@@ -20,7 +21,7 @@ func ValidateVaultName(vaultName string) error {
 }
 
 func ValidateVaultLocationFromConfig(vaultName string) bool {
-	vaultLocation, ok := config.Config.Vaults[vaultName]
+	vaultLocation, ok := registry.Registry.Vaults[vaultName]
 	if !ok {
 		return false
 	}
@@ -28,7 +29,7 @@ func ValidateVaultLocationFromConfig(vaultName string) bool {
 }
 
 func IsVaultCurrentVault(vaultName string) bool {
-	return vaultName == config.Config.CurrentVault
+	return vaultName == state.State.CurrentVault
 }
 
 func CheckPasswordValid(password string) error {

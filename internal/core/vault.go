@@ -8,9 +8,10 @@ import (
 	"sort"
 
 	"github.com/google/uuid"
-	"github.com/parthivsaikia/enmasec/internal/config"
 	"github.com/parthivsaikia/enmasec/internal/encryption"
 	"github.com/parthivsaikia/enmasec/internal/models"
+	"github.com/parthivsaikia/enmasec/internal/registry"
+	"github.com/parthivsaikia/enmasec/internal/state"
 	"github.com/parthivsaikia/enmasec/internal/store"
 	"github.com/parthivsaikia/enmasec/internal/validation"
 )
@@ -31,15 +32,22 @@ func CreateVault(dir, vaultName, password string) (*models.Vault, error) {
 		return nil, fmt.Errorf("unable to encrypt index data: %w", err)
 	}
 	encryptedIndexByte, err := encryption.EncryptAge(indexByte, string(secretKey))
+	if err != nil {
+		return nil, err
+	}
 	err = store.CreateVaultStore(vaultPath, password, encryptedKey, encryptedIndexByte)
 	if err != nil {
 		return nil, err
 	}
-	config.Config.CurrentVault = vaultName
-	config.Config.Vaults[vaultName] = vaultPath
-	if err := config.Save(); err != nil {
-		return nil, fmt.Errorf("couldn't save config: %w", err)
+	state.State.CurrentVault = vaultName
+	registry.Registry.Vaults[vaultName] = vaultPath
+	if err := state.Save(); err != nil {
+		return nil, fmt.Errorf("couldn't save current state: %w", err)
 	}
+	if err := registry.Save(); err != nil {
+		return nil, fmt.Errorf("couldn't save data to registry: %w", err)
+	}
+
 	return &models.Vault{
 		Path: vaultPath,
 		Name: vaultName,
@@ -47,7 +55,7 @@ func CreateVault(dir, vaultName, password string) (*models.Vault, error) {
 }
 
 func UnlockVault(vaultName, password string) ([]byte, error) {
-	vaultPath := config.Config.Vaults[vaultName]
+	vaultPath := registry.Registry.Vaults[vaultName]
 	keyFile := filepath.Join(vaultPath, "key.age")
 	content, err := store.ReadFile(keyFile)
 	if err != nil {
@@ -61,12 +69,12 @@ func UnlockVault(vaultName, password string) ([]byte, error) {
 }
 
 func CheckoutVault(vaultName string) error {
-	if _, ok := config.Config.Vaults[vaultName]; !ok {
+	if _, ok := registry.Registry.Vaults[vaultName]; !ok {
 		return fmt.Errorf("vault doesn't exist")
 	} else {
-		config.Config.CurrentVault = vaultName
-		if err := config.Save(); err != nil {
-			return fmt.Errorf("unable to save config: %w", err)
+		state.State.CurrentVault = vaultName
+		if err := state.Save(); err != nil {
+			return fmt.Errorf("unable to save current state: %w", err)
 		}
 	}
 	return nil
@@ -74,7 +82,7 @@ func CheckoutVault(vaultName string) error {
 
 func GetVaults() []*models.Vault {
 	var vaults []*models.Vault
-	for vaultName, vaultPath := range config.Config.Vaults {
+	for vaultName, vaultPath := range registry.Registry.Vaults {
 		var v models.Vault
 		v.Name = vaultName
 		v.Path = vaultPath
@@ -87,7 +95,7 @@ func GetVaults() []*models.Vault {
 }
 
 func UpdateVault(vaultName, newVaultName, newDir, newPassword string, key []byte) error {
-	vaultPath := config.Config.Vaults[vaultName]
+	vaultPath := registry.Registry.Vaults[vaultName]
 	if newDir == "" {
 		newDir = filepath.Dir(vaultPath)
 	}
@@ -119,12 +127,15 @@ func UpdateVault(vaultName, newVaultName, newDir, newPassword string, key []byte
 		}
 	}
 
-	config.Config.Vaults[newVaultName] = newVaultLocation
-	config.Config.CurrentVault = newVaultName
+	registry.Registry.Vaults[newVaultName] = newVaultLocation
+	state.State.CurrentVault = newVaultName
 	if newVaultName != vaultName {
-		delete(config.Config.Vaults, vaultName)
+		delete(registry.Registry.Vaults, vaultName)
 	}
-	if err := config.Save(); err != nil {
+	if err := state.Save(); err != nil {
+		return err
+	}
+	if err := registry.Save(); err != nil {
 		return err
 	}
 
@@ -132,7 +143,7 @@ func UpdateVault(vaultName, newVaultName, newDir, newPassword string, key []byte
 }
 
 func DecryptVaultIndex(vaultName, key string) ([]byte, error) {
-	vaultPath := config.Config.Vaults[vaultName]
+	vaultPath := registry.Registry.Vaults[vaultName]
 	indexFilePath := filepath.Join(vaultPath, "index.age")
 	indexBytes, err := store.ReadFile(indexFilePath)
 	if err != nil {
@@ -146,7 +157,7 @@ func DecryptVaultIndex(vaultName, key string) ([]byte, error) {
 }
 
 func RepairVaultIndex(vaultName, key string) (*models.VaultIndex, *models.RuntimeIndex, error) {
-	vaultPath := config.Config.Vaults[vaultName]
+	vaultPath := registry.Registry.Vaults[vaultName]
 	indexFilePath := filepath.Join(vaultPath, "index.age")
 	indexData, err := DecryptVaultIndex(vaultName, string(key))
 	if err != nil {
@@ -197,16 +208,16 @@ func RepairVaultIndex(vaultName, key string) (*models.VaultIndex, *models.Runtim
 }
 
 func DeleteVault(vaultName string) error {
-	if vaultName == config.Config.CurrentVault {
+	if vaultName == state.State.CurrentVault {
 		return fmt.Errorf("%s is current vault. Checkout to another vault first", vaultName)
 	}
-	vaultPath := config.Config.Vaults[vaultName]
+	vaultPath := registry.Registry.Vaults[vaultName]
 	if err := store.DeleteFile(vaultPath); err != nil {
 		return err
 	}
-	delete(config.Config.Vaults, vaultName)
-	if err := config.Save(); err != nil {
-		return fmt.Errorf("unable to save config: %w", err)
+	delete(registry.Registry.Vaults, vaultName)
+	if err := registry.Save(); err != nil {
+		return fmt.Errorf("unable to save registry: %w", err)
 	}
 	return nil
 }

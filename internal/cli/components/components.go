@@ -8,8 +8,8 @@ import (
 	"charm.land/huh/v2"
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/table"
-	"github.com/parthivsaikia/enmasec/internal/config"
 	"github.com/parthivsaikia/enmasec/internal/models"
+	"github.com/parthivsaikia/enmasec/internal/state"
 	"github.com/parthivsaikia/enmasec/internal/validation"
 	"golang.org/x/term"
 )
@@ -42,7 +42,7 @@ func VaultTable(vaults []*models.Vault) error {
 
 	for _, v := range vaults {
 		rows = append(rows, []string{v.Name, v.Path})
-		if v.Name == config.Config.CurrentVault {
+		if v.Name == state.State.CurrentVault {
 			currentVaultRow = len(rows) - 1
 		}
 	}
