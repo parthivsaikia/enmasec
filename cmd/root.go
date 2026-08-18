@@ -9,7 +9,6 @@ import (
 	"github.com/parthivsaikia/enmasec/internal/cli/vault"
 	"github.com/parthivsaikia/enmasec/internal/clipboard"
 	"github.com/parthivsaikia/enmasec/internal/config"
-	"github.com/parthivsaikia/enmasec/internal/tui"
 	"github.com/parthivsaikia/enmasec/internal/utils"
 	"github.com/spf13/cobra"
 )
@@ -19,18 +18,6 @@ var rootCmd = &cobra.Command{
 	Use:   "enmasec",
 	Short: "Manage passwords from the terminal.",
 	Long:  `Enmasec is a command line utility to manage passwords locally.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		tuiMode, err := cmd.Flags().GetBool("tui")
-		if err != nil {
-			return err
-		}
-		if tuiMode {
-			if err := tui.App(); err != nil {
-				return err
-			}
-		}
-		return nil
-	},
 }
 
 func Execute() {
@@ -45,7 +32,6 @@ func init() {
 	rootCmd.AddCommand(service.NewCommand())
 	rootCmd.AddCommand(account.NewCommand())
 	rootCmd.AddCommand(clipboard.ClearPasswordCmd())
-	rootCmd.Flags().Bool("tui", false, "Start enmasec in tui mode.")
 	logger := utils.Logger(os.Stdout)
 	config.Init()
 	if err := config.Load(); err != nil {
