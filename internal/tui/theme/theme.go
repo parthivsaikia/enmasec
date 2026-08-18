@@ -17,10 +17,9 @@ type Theme struct {
 }
 
 type pane struct {
-	Foreground   string `yaml:"fg"`
-	Background   string `yaml:"bg"`
-	BorderColor  string `yaml:"border-color"`
-	BorderRadius string `yaml:"border-radius"`
+	Foreground  string `yaml:"fg"`
+	Background  string `yaml:"bg"`
+	BorderColor string `yaml:"border-color"`
 }
 
 type list struct {
@@ -28,11 +27,9 @@ type list struct {
 	HighlightedBackground string `yaml:"highlighted-bg"`
 	Foreground            string `yaml:"fg"`
 	Background            string `yaml:"bg"`
-	BorderRadius          string `yaml:"border-radius"`
 }
 
 type form struct {
-	BorderRadius     string `yaml:"border-radius"`
 	BorderColor      string `yaml:"border-color"`
 	Foreground       string `yaml:"fg"`
 	Background       string `yaml:"bg"`
@@ -43,7 +40,7 @@ type form struct {
 func GetCurrTheme() *Theme {
 	theme := config.Config.Theme
 	if theme == "" {
-		return &ThemeSlate
+		return &ThemeForest
 	}
 	if isPreInstalledTheme(theme) {
 		return PreInstalledThemes[theme]

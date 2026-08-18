@@ -112,9 +112,10 @@ func (v *VaultCreateForm) IsOpen() bool {
 	return v.open
 }
 
-func (v *VaultCreateForm) Open() {
+func (v *VaultCreateForm) Open() tea.Cmd {
 	v.form.State = huh.StateNormal
 	v.open = true
+	return v.form.Init()
 }
 
 func (v *VaultCreateForm) Close() {
